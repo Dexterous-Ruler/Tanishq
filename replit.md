@@ -102,7 +102,7 @@ medi-locker/
   - Get Call handler
   - Change Number → navigates back to auth
   - Back button → navigates to auth
-  - Onboarding navigation (when enabled)
+  - Onboarding navigation → /onboarding
   - Privacy, Terms, Help handlers
 
 - **Routing & Config**
@@ -110,8 +110,35 @@ medi-locker/
   - Feature flag: `screens.otp = true`
   - Auth screen navigates to OTP on success
 
+### ✅ Completed (Screen 3: Onboarding)
+- **Onboarding Component** (`MediLockerOnboarding.tsx`)
+  - 4-slide carousel with Framer Motion animations
+  - Slide 1: Introduction with Shield icon
+  - Slide 2: Data ownership with 3 bullet points
+  - Slide 3: Offline-first features with 3 bullets
+  - Slide 4: Settings (language + guided mode)
+  - Swipe gesture support (left/right navigation)
+  - Top language switcher (EN | हिंदी)
+  - Progress dots navigation (clickable)
+  - Staggered content reveals
+  - Icon animations (scale + fade)
+  - Language selection (English/हिंदी)
+  - Guided Mode toggle
+  - Full responsive design (mobile → TV)
+  - All data-testid attributes
+
+- **Screen Container** (`pages/onboarding.tsx`)
+  - onComplete handler
+  - Home navigation (when enabled)
+  - Completion alert (home coming soon)
+
+- **Routing & Config**
+  - Route: `/onboarding` now live
+  - Feature flag: `screens.onboarding = true`
+  - OTP screen navigates to onboarding after verification
+  - Complete flow: Auth → OTP → Onboarding → (Home next)
+
 ### 🚧 Planned (Feature-Flagged)
-- **Onboarding**: User preferences, ABHA setup
 - **Home Dashboard**: Health records overview
 - **Vault**: Secure document storage
 - **Backend**: Real authentication APIs
@@ -269,15 +296,29 @@ See `FEATURE_FLAGS_TEST.md` for comprehensive testing guide.
 - [x] All interactions tested and verified
 - [x] No console errors
 
+### Screen 3 (Onboarding) - ✅ Complete
+- [x] Exact UI match from provided design
+- [x] 4-slide carousel with smooth animations
+- [x] Swipe gesture navigation (left/right)
+- [x] Progress dots clickable and functional
+- [x] Language switching (EN ↔ HI) across all slides
+- [x] Slide 4 language selection working
+- [x] Guided mode toggle functional
+- [x] All slide content displays correctly
+- [x] All navigation tested (Next buttons, dots, swipes)
+- [x] Responsive across all screen types
+- [x] No console errors
+- [x] Complete flow working (Auth → OTP → Onboarding)
+
 ### Next Milestones
-- [ ] Onboarding screen implementation
-- [ ] Home dashboard
+- [ ] Home dashboard implementation
 - [ ] Secure vault with encryption
 - [ ] Backend authentication integration
 - [ ] ABHA ID flow
 
 ### Future Enhancements (Post-MVP)
 - [ ] Pass real phone number from Auth to OTP (location state)
+- [ ] Persist language and guided mode preferences (global settings)
 - [ ] Replace stub alerts with proper UI screens
 - [ ] Backend OTP verification API integration
 - [ ] SMS/Call service integration
