@@ -67,7 +67,7 @@ medi-locker/
 - **Auth Page Component** (`MediLockerAuthPage.tsx`)
   - Phone number input with +91 prefix
   - Real-time validation (Indian mobile format)
-  - OTP flow (stubbed)
+  - OTP flow → navigates to /otp
   - Alternative sign-in: ABHA ID, Email, Guest
   - Language switcher (English/Hindi)
   - Guided Mode toggle for accessibility
@@ -77,17 +77,40 @@ medi-locker/
   - ARIA labels and data-testid attributes
 
 - **Screen Container** (`pages/auth.tsx`)
-  - Stubbed event handlers with console logging
-  - Alert dialogs for "coming soon" features
+  - Feature-flag controlled handlers
+  - Navigation to OTP screen when enabled
   - Clean separation of UI and logic
 
+### ✅ Completed (Screen 2: OTP Verification)
+- **OTP Verification Component** (`MediLockerOtpVerificationScreen.tsx`)
+  - 6-digit OTP input with visual feedback
+  - Auto-focus and numeric keyboard
+  - Error state with animation (incorrect OTP)
+  - Resend timer (28 seconds countdown)
+  - Resend OTP button (enabled after timer)
+  - Get a Call alternative
+  - Change Number navigation back to auth
+  - Language switcher (English/Hindi)
+  - Guided Mode toggle
+  - Framer Motion animations
+  - Full responsive design (mobile → TV)
+  - All data-testid attributes
+
+- **Screen Container** (`pages/otp.tsx`)
+  - Stubbed verification (accepts '123456')
+  - Resend OTP handler
+  - Get Call handler
+  - Change Number → navigates back to auth
+  - Back button → navigates to auth
+  - Onboarding navigation (when enabled)
+  - Privacy, Terms, Help handlers
+
 - **Routing & Config**
-  - Routes: `/` and `/auth` both serve Auth page
-  - Feature flags system for controlled rollout
-  - SEO meta tags and Open Graph
+  - Route: `/otp` now live
+  - Feature flag: `screens.otp = true`
+  - Auth screen navigates to OTP on success
 
 ### 🚧 Planned (Feature-Flagged)
-- **OTP Verification**: 6-digit code input, timer, resend
 - **Onboarding**: User preferences, ABHA setup
 - **Home Dashboard**: Health records overview
 - **Vault**: Secure document storage
