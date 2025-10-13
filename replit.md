@@ -1,361 +1,71 @@
 # MediLocker - Health Data Management Platform
 
-## 📋 Project Overview
+## Overview
 
-**MediLocker** is a responsive health data management webapp that gives users complete control over their medical records with encrypted, secure storage. Built with a UI-first approach using React, TypeScript, and Framer Motion.
+MediLocker is a responsive health data management web application designed to provide users with secure, encrypted control over their medical records. The platform prioritizes user privacy, accessibility, and a seamless multi-device experience.
 
-## 🎯 Project Goals
+**Business Vision & Market Potential:** To empower individuals with complete ownership and secure access to their health data, addressing growing concerns about data privacy and fragmented medical records.
 
-- **Responsive Design**: Works seamlessly on mobile, tablet, PC, and TV screens
-- **Accessibility**: Multi-language support (English/Hindi), Guided Mode for enhanced accessibility
-- **Security**: End-to-end encryption messaging, privacy-first design
-- **Progressive Implementation**: Incremental screen-by-screen development
+**Key Capabilities:**
+- **Secure Storage:** Encrypted medical record management.
+- **Responsive Design:** Optimal viewing and interaction across mobile, tablet, PC, and TV screens.
+- **Accessibility:** Multi-language support (English/Hindi) and a Guided Mode.
+- **UI-First Development:** Focus on pixel-perfect UI implementation based on provided designs.
 
-## 🏗️ Architecture
+## User Preferences
 
-### Tech Stack
-- **Frontend**: React 18, TypeScript, Vite
-- **Routing**: Wouter (lightweight client-side routing)
-- **Styling**: Tailwind CSS, Custom design system
-- **Animations**: Framer Motion
-- **Icons**: Lucide React
-- **State**: React Query (TanStack Query v5)
-- **Backend**: Express.js (future integration)
-- **Storage**: In-memory (MemStorage) for MVP
+- **Communication Style:** I prefer direct and concise communication.
+- **Workflow:** I prefer an iterative and incremental development approach, focusing on one screen at a time.
+- **Interaction:**
+    - Implement exact UI from provided designs; do not redesign or improvise.
+    - Create thin screen containers with stubbed handlers.
+    - Expose routes for preview.
+    - Add accessibility without changing visuals.
+    - Use feature flags for controlled navigation and rollouts.
+    - Test responsiveness across all defined breakpoints (mobile, tablet, desktop, TV).
+    - Verify accessibility (ARIA, keyboard navigation).
+    - Obtain user approval before implementing behavior or proceeding to the next screen.
 
-### Design Approach
-Following **UI-First Development**:
-1. Render exact UI from provided designs (no redesign)
-2. Create thin screen containers with stubbed handlers
-3. Expose routes for preview
-4. Add accessibility without changing visuals
-5. Feature flags for controlled navigation
+## System Architecture
 
-## 📁 Project Structure
+**UI/UX Decisions:**
+-   **Design Approach:** UI-First Development, rendering exact UI from provided designs.
+-   **Color Scheme:** Trust-oriented blue palette (Blue 600, gradients), gray for text hierarchy, functional red/green for status.
+-   **Typography:** System font stack, scalable for accessibility (Guided Mode increases font size).
+-   **Responsive Design:** Mobile-first approach, scaling to 4K displays with breakpoints for mobile (max 390px), tablet (768px+), desktop (1024px+), and large screens/TV (1280px+).
+-   **Accessibility:** WCAG AA compliance, multi-language support (English/Hindi), and a Guided Mode.
 
-```
-medi-locker/
-├── client/
-│   ├── src/
-│   │   ├── components/          # Reusable UI components
-│   │   │   ├── ui/              # Shadcn components
-│   │   │   └── MediLockerAuthPage.tsx
-│   │   ├── pages/               # Screen containers
-│   │   │   ├── auth.tsx         # ✅ Auth page (live)
-│   │   │   ├── otp.tsx          # 🚧 Coming soon
-│   │   │   ├── onboarding.tsx   # 🚧 Coming soon
-│   │   │   ├── home.tsx         # 🚧 Coming soon
-│   │   │   └── vault.tsx        # 🚧 Coming soon
-│   │   ├── config/
-│   │   │   └── featureFlags.ts  # Feature toggle system
-│   │   ├── lib/                 # Utilities
-│   │   └── App.tsx              # Main app with routing
-│   └── index.html
-├── server/
-│   ├── routes.ts                # API endpoints (future)
-│   └── storage.ts               # Data persistence layer
-├── shared/
-│   └── schema.ts                # Shared types/schemas
-├── design_guidelines.md         # Design system rules
-├── RESPONSIVE_GUIDE.md          # Responsive testing guide
-└── replit.md                    # This file
-```
+**Technical Implementations:**
+-   **Frontend:** React 18 with TypeScript, using Vite for development.
+-   **Routing:** Wouter for lightweight client-side routing.
+-   **Styling:** Tailwind CSS with a custom design system.
+-   **Animations:** Framer Motion for smooth UI transitions.
+-   **State Management:** React Query (TanStack Query v5).
+-   **Iconography:** Lucide React.
+-   **Feature Flagging:** Implemented via `client/src/config/featureFlags.ts` to control screen availability and authentication methods, ensuring progressive rollout.
 
-## 🚀 Current Implementation Status
+**Feature Specifications:**
+-   **Authentication Flow:** Phone number input with real-time validation (Indian format), OTP verification with resend timer and call options, ABHA ID/Email/Guest sign-in alternatives.
+-   **Onboarding:** Multi-slide carousel introducing features like data ownership, offline-first capabilities, and settings.
+-   **Home Dashboard:** Sticky header, quick action cards (Upload, AI Insights, Emergency, Medications), recent documents, AI health insights, nearby clinics/labs, and a fixed bottom navigation.
+-   **Security:** End-to-end encryption messaging (UI), privacy-first design, planned ABHA ID integration, and secure vault implementation.
 
-### ✅ Completed (Screen 1: Auth)
-- **Auth Page Component** (`MediLockerAuthPage.tsx`)
-  - Phone number input with +91 prefix
-  - Real-time validation (Indian mobile format)
-  - OTP flow → navigates to /otp
-  - Alternative sign-in: ABHA ID, Email, Guest
-  - Language switcher (English/Hindi)
-  - Guided Mode toggle for accessibility
-  - Privacy information sheet
-  - Framer Motion animations
-  - Full responsive design (mobile → TV)
-  - ARIA labels and data-testid attributes
+**System Design Choices:**
+-   **Modular Structure:** `components`, `pages`, `config`, `lib` directories for clear separation of concerns.
+-   **Progressive Enhancement:** Screens are built and integrated one by one, enabling a structured development and review process.
+-   **In-memory storage (MemStorage)** for MVP, with future plans for a robust backend and persistent storage.
 
-- **Screen Container** (`pages/auth.tsx`)
-  - Feature-flag controlled handlers
-  - Navigation to OTP screen when enabled
-  - Clean separation of UI and logic
+## External Dependencies
 
-### ✅ Completed (Screen 2: OTP Verification)
-- **OTP Verification Component** (`MediLockerOtpVerificationScreen.tsx`)
-  - 6-digit OTP input with visual feedback
-  - Auto-focus and numeric keyboard
-  - Error state with animation (incorrect OTP)
-  - Resend timer (28 seconds countdown)
-  - Resend OTP button (enabled after timer)
-  - Get a Call alternative
-  - Change Number navigation back to auth
-  - Language switcher (English/Hindi)
-  - Guided Mode toggle
-  - Framer Motion animations
-  - Full responsive design (mobile → TV)
-  - All data-testid attributes
-
-- **Screen Container** (`pages/otp.tsx`)
-  - Stubbed verification (accepts '123456')
-  - Resend OTP handler
-  - Get Call handler
-  - Change Number → navigates back to auth
-  - Back button → navigates to auth
-  - Onboarding navigation → /onboarding
-  - Privacy, Terms, Help handlers
-
-- **Routing & Config**
-  - Route: `/otp` now live
-  - Feature flag: `screens.otp = true`
-  - Auth screen navigates to OTP on success
-
-### ✅ Completed (Screen 3: Onboarding)
-- **Onboarding Component** (`MediLockerOnboarding.tsx`)
-  - 4-slide carousel with Framer Motion animations
-  - Slide 1: Introduction with Shield icon
-  - Slide 2: Data ownership with 3 bullet points
-  - Slide 3: Offline-first features with 3 bullets
-  - Slide 4: Settings (language + guided mode)
-  - Swipe gesture support (left/right navigation)
-  - Top language switcher (EN | हिंदी)
-  - Progress dots navigation (clickable)
-  - Staggered content reveals
-  - Icon animations (scale + fade)
-  - Language selection (English/हिंदी)
-  - Guided Mode toggle
-  - Full responsive design (mobile → TV)
-  - All data-testid attributes
-
-- **Screen Container** (`pages/onboarding.tsx`)
-  - onComplete handler
-  - Home navigation (when enabled)
-  - Completion alert (home coming soon)
-
-- **Routing & Config**
-  - Route: `/onboarding` now live
-  - Feature flag: `screens.onboarding = true`
-  - OTP screen navigates to onboarding after verification
-  - Complete flow: Auth → OTP → Onboarding → (Home next)
-
-### 🚧 Planned (Feature-Flagged)
-- **Home Dashboard**: Health records overview
-- **Vault**: Secure document storage
-- **Backend**: Real authentication APIs
-
-## 🎨 Design System
-
-See `design_guidelines.md` for comprehensive design rules.
-
-### Key Principles
-- **Trust & Security**: Shield iconography, blue color palette
-- **Clean & Clinical**: White backgrounds, subtle elevations
-- **Accessible**: WCAG AA compliance, guided mode
-- **Responsive**: Mobile-first, scales to 4K displays
-
-### Color Palette
-- Primary: Blue 600 (#2563EB) - Trust, healthcare
-- Gradients: Blue 500 → Blue 600 → Indigo 700
-- Neutrals: Gray scale for text hierarchy
-- Functional: Red 600 (errors), Green 600 (success)
-
-### Typography
-- Font: System stack (-apple-system, Segoe UI, Inter)
-- Scale: 12px (caption) → 28px (hero)
-- Guided Mode: +1-2 sizes for accessibility
-
-### Responsive Breakpoints
-- Mobile: base (390px max-width)
-- Tablet: md (768px+)
-- Desktop: lg (1024px+)
-- TV/Large: xl (1280px+)
-
-## 🧪 Testing & Validation
-
-### Smoke Test Checklist
-See `RESPONSIVE_GUIDE.md` for complete testing guide.
-
-**Quick Tests:**
-1. Open app in browser
-2. Enter phone number: `9876543210`
-3. Click "Continue with OTP"
-4. Verify loading animation
-5. Check alert dialog appears
-6. Test language switch (EN ↔ हिं)
-7. Toggle Guided Mode
-8. Open Privacy sheet
-9. Resize browser (mobile → desktop)
-
-### Responsive Testing
-- Chrome DevTools: Ctrl+Shift+M
-- Test widths: 320px, 390px, 768px, 1024px, 1920px
-- Verify: No horizontal scroll, readable text, touch targets ≥44px
-
-## 🔧 Development Workflow
-
-### Current Phase: Screen-by-Screen Implementation
-1. **Receive screen design** (TSX code from user)
-2. **Create component** exactly as provided (no redesign)
-3. **Build screen container** with stubbed handlers
-4. **Add route** and update feature flags
-5. **Test responsiveness** across breakpoints
-6. **Verify accessibility** (ARIA, keyboard nav)
-7. **Get user approval** before implementing behavior
-
-### Next Screen: OTP Verification
-Will follow same pattern:
-- Create `MediLockerOTPPage` component
-- Add `pages/otp.tsx` container
-- Route `/otp` with feature flag
-- Test and validate
-
-## 📦 Dependencies
-
-### Core
-- react: ^18.3.1
-- react-dom: ^18.3.1
-- typescript: ^5.6.3
-- vite: ^6.0.11
-
-### UI/Animation
-- framer-motion: ^11.15.0
-- lucide-react: ^0.468.0
-- tailwindcss: ^4.0.14
-
-### Routing/State
-- wouter: ^3.3.5
-- @tanstack/react-query: ^5.62.11
-
-### Backend (Future)
-- express: ^5.0.2
-- drizzle-orm: ^0.38.5
-
-## 🔐 Security Considerations
-
-- **Privacy-First**: No data collection without consent
-- **Encryption**: End-to-end encryption messaging (UI)
-- **ABHA Integration**: Government health ID support (planned)
-- **Secure Storage**: Future encrypted vault implementation
-
-## 📝 Feature Flags
-
-Located in `client/src/config/featureFlags.ts`:
-
-```typescript
-screens: {
-  auth: true,        // ✅ Live
-  otp: false,        // 🚧 Next
-  onboarding: false,
-  home: false,
-  vault: false,
-}
-```
-
-### How Feature Flags Work
-
-**Routing Control:**
-- `screens.*` flags control route availability
-- Disabled screens return 404
-- Routes conditionally rendered in App.tsx based on flags
-
-**Auth Method Control:**
-- `auth.*` flags control authentication method handlers
-- Disabled methods: handler undefined, button non-functional
-- Enabled methods: handler executes, shows alert or navigates
-
-**Important Notes:**
-1. **Reload Required**: Flag changes need browser reload (compile-time flags)
-2. **UI Preserved**: Buttons remain visible when disabled (per "exact UI" requirement)
-3. **Progressive Rollout**: Enable screens/methods incrementally as implemented
-
-See `FEATURE_FLAGS_TEST.md` for comprehensive testing guide.
-
-## 🎯 Success Criteria
-
-### Screen 1 (Auth) - ✅ Complete
-- [x] Exact UI match from provided design
-- [x] Responsive across all screen types
-- [x] Accessibility attributes added
-- [x] Animations smooth and performant
-- [x] Language switching works
-- [x] Guided mode functional
-- [x] All interactions stubbed properly
-- [x] No console warnings
-- [x] Feature flags in place
-- [x] Navigation to OTP screen working
-
-### Screen 2 (OTP) - ✅ Complete
-- [x] Exact UI match from provided design
-- [x] 6-digit OTP input with visual feedback
-- [x] Error state with animations
-- [x] Resend timer (28s countdown) working
-- [x] Language switching (EN ↔ HI) works
-- [x] Guided mode functional
-- [x] All navigation working (back, change number)
-- [x] Responsive across all screen types
-- [x] All interactions tested and verified
-- [x] No console errors
-
-### Screen 3 (Onboarding) - ✅ Complete
-- [x] Exact UI match from provided design
-- [x] 4-slide carousel with smooth animations
-- [x] Swipe gesture navigation (left/right)
-- [x] Progress dots clickable and functional
-- [x] Language switching (EN ↔ HI) across all slides
-- [x] Slide 4 language selection working
-- [x] Guided mode toggle functional
-- [x] All slide content displays correctly
-- [x] All navigation tested (Next buttons, dots, swipes)
-- [x] Responsive across all screen types
-- [x] No console errors
-- [x] Complete flow working (Auth → OTP → Onboarding)
-
-### Next Milestones
-- [ ] Home dashboard implementation
-- [ ] Secure vault with encryption
-- [ ] Backend authentication integration
-- [ ] ABHA ID flow
-
-### Future Enhancements (Post-MVP)
-- [ ] Pass real phone number from Auth to OTP (location state)
-- [ ] Persist language and guided mode preferences (global settings)
-- [ ] Replace stub alerts with proper UI screens
-- [ ] Backend OTP verification API integration
-- [ ] SMS/Call service integration
-
-## 🚀 How to Run
-
-```bash
-# Install dependencies (already done)
-npm install
-
-# Start development server
-npm run dev
-
-# Access app
-http://localhost:5000
-```
-
-The app will automatically open on the Auth page.
-
-## 📚 Additional Resources
-
-- **Design Guidelines**: `design_guidelines.md`
-- **Responsive Guide**: `RESPONSIVE_GUIDE.md`
-- **Shadcn Components**: `client/src/components/ui/`
-- **Feature Flags**: `client/src/config/featureFlags.ts`
-
-## 🤝 Development Principles
-
-1. **UI-First**: Implement exact designs, no improvisation
-2. **Incremental**: One screen at a time with approval gates
-3. **Responsive**: Test on all device sizes
-4. **Accessible**: WCAG compliance from the start
-5. **Feature-Flagged**: Safe, controlled feature rollout
-6. **Well-Documented**: Clear code, comprehensive guides
-
----
-
-**Last Updated**: Initial Auth screen implementation
-**Current Phase**: Awaiting user approval for Screen 1
-**Next Screen**: OTP Verification (pending)
+-   **React:** `react`, `react-dom`
+-   **TypeScript:** `typescript`
+-   **Build Tool:** `vite`
+-   **UI & Animation:**
+    -   `framer-motion`
+    -   `lucide-react`
+    -   `tailwindcss`
+-   **Routing:** `wouter`
+-   **State Management:** `@tanstack/react-query`
+-   **Backend (Planned/Future Integration):**
+    -   `express`
+    -   `drizzle-orm`
