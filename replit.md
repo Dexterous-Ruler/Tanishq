@@ -48,12 +48,33 @@ MediLocker is a responsive health data management web application designed to pr
 -   **Authentication Flow:** Phone number input with real-time validation (Indian format), OTP verification with resend timer and call options, ABHA ID/Email/Guest sign-in alternatives.
 -   **Onboarding:** Multi-slide carousel introducing features like data ownership, offline-first capabilities, and settings.
 -   **Home Dashboard:** Sticky header, quick action cards (Upload, AI Insights, Emergency, Medications), recent documents, AI health insights, nearby clinics/labs, and a fixed bottom navigation.
+-   **Vault Document Timeline:** Secure document vault with sticky header, search functionality, type filters (All/Prescriptions/Lab/Imaging/Bills), document timeline with cards showing title/provider/date/tags, floating action button (FAB) with add menu (Camera/File Upload/QR Scan/DICOM Import), offline sync banner, and empty state. All interactions are stubbed for MVP.
 -   **Security:** End-to-end encryption messaging (UI), privacy-first design, planned ABHA ID integration, and secure vault implementation.
 
 **System Design Choices:**
 -   **Modular Structure:** `components`, `pages`, `config`, `lib` directories for clear separation of concerns.
 -   **Progressive Enhancement:** Screens are built and integrated one by one, enabling a structured development and review process.
 -   **In-memory storage (MemStorage)** for MVP, with future plans for a robust backend and persistent storage.
+
+## Recent Changes (October 13, 2025)
+
+**Screen 5 - Vault Document Timeline Implemented:**
+-   Created `VaultDocumentTimeline.tsx` component with complete document vault UI
+-   Implemented sticky header with back button, page title, and search toggle
+-   Added animated search input with live filtering (case-insensitive)
+-   Built 5 document type filters: All, Prescriptions, Lab Reports, Imaging, Bills & Insurance
+-   Designed document cards with type-specific colored icons, provider info, dates, and tags
+-   Integrated floating action button (FAB) with add menu modal (Camera/File Upload/QR Scan/DICOM Import)
+-   Added offline sync banner showing pending documents
+-   Implemented empty state with call-to-action button
+-   Created `pages/vault.tsx` container with all stubbed handlers
+-   Enabled `screens.vault` feature flag
+-   Added `/vault` route to App.tsx
+-   Updated home page bottom navigation to navigate to vault
+-   Complete flow now working: Auth → OTP → Onboarding → Home → Vault
+-   Full bilingual support (EN/HI) with complete translation keys
+-   All data-testid attributes present for comprehensive testing
+-   Comprehensive automated testing passed (13 test scenarios covering navigation, filters, search, animations, responsive design)
 
 ## External Dependencies
 
