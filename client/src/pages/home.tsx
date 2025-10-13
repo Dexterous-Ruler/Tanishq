@@ -70,7 +70,7 @@ export default function HomePage() {
     if (tabId === 'vault') {
       setLocation('/vault');
     } else if (tabId === 'share') {
-      alert('Share feature coming soon!');
+      setLocation('/consent');
     } else if (tabId === 'emergency') {
       alert('Emergency features coming soon!');
     } else if (tabId === 'profile') {
