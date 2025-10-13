@@ -117,6 +117,24 @@ MediLocker is a responsive health data management web application designed to pr
 -   Comprehensive data-testid attributes for all interactive elements
 -   Automated testing passed (11 test scenarios covering navigation, tabs, offline banner, revoke flow, renew, audit log, FAB, empty states, back navigation, card details, responsive design at mobile/tablet/desktop)
 
+**Screen 8 - Grant Consent Flow Implemented:**
+-   Created `GrantConsentFlow.tsx` component - 5-step wizard for granting health data consent
+-   **Step 1 - Recipient Selection:** 5 role options (Doctor/Lab/Insurance/Family/Other) with icon buttons and name input field
+-   **Step 2 - Scope Selection:** 4 access types with descriptions (Documents/Emergency Card/AI Insights/Timeline), multi-select with checkmarks, offline queuing notice
+-   **Step 3 - Duration & Purpose:** 3 duration options (24h/7d/custom) with icons, optional purpose text input
+-   **Step 4 - Confirmation:** Summary card showing recipient/scopes/duration/purpose, 4-digit PIN entry with auto-focus progression, biometric option (UI)
+-   **Step 5 - Success:** Animated checkmark, QR code placeholder, Copy Link and Send SMS buttons, Done button to return to consent center
+-   **Progress Indicator:** Visual dots (1/2/3/4) showing current step with active/completed states
+-   **Navigation:** Back button on steps 2-4, Next button with smart validation (disabled when required fields empty)
+-   **Language Toggle:** Switches between EN/HI with complete UI re-render on all steps
+-   **Validation Rules:** Step 1 requires role + name, Step 2 requires 1+ scope, Step 4 requires 4-digit PIN
+-   Integrated via consent center add buttons (header/FAB/empty state) - replaces consent center view when active
+-   Full-screen modal with max-width 390px for mobile-first design
+-   Framer Motion animations with language-aware keys for proper re-rendering
+-   Complete bilingual support with all translation keys
+-   Comprehensive data-testid attributes for all interactive elements
+-   Automated testing passed (all core scenarios covering complete flow, language toggle, back navigation, validation, responsive design at mobile viewport)
+
 ## External Dependencies
 
 -   **React:** `react`, `react-dom`
