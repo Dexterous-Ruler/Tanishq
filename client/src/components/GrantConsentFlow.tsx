@@ -236,7 +236,7 @@ export const GrantConsentFlow = ({
           {/* Step 1: Recipient Selection */}
           {step === 1 && (
             <motion.div
-              key="step1"
+              key={`step1-${language}`}
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
@@ -305,7 +305,7 @@ export const GrantConsentFlow = ({
           {/* Step 2: Scope Selection */}
           {step === 2 && (
             <motion.div
-              key="step2"
+              key={`step2-${language}`}
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
@@ -377,7 +377,7 @@ export const GrantConsentFlow = ({
           {/* Step 3: Duration and Purpose */}
           {step === 3 && (
             <motion.div
-              key="step3"
+              key={`step3-${language}`}
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
@@ -450,7 +450,7 @@ export const GrantConsentFlow = ({
           {/* Step 4: Confirmation */}
           {step === 4 && (
             <motion.div
-              key="step4"
+              key={`step4-${language}`}
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
@@ -576,7 +576,7 @@ export const GrantConsentFlow = ({
           {/* Step 5: Success */}
           {step === 5 && (
             <motion.div
-              key="step5"
+              key={`step5-${language}`}
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               className="p-6 flex flex-col items-center justify-center min-h-[calc(100vh-120px)]"
