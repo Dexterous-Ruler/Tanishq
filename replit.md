@@ -48,7 +48,8 @@ MediLocker is a responsive health data management web application designed to pr
 -   **Authentication Flow:** Phone number input with real-time validation (Indian format), OTP verification with resend timer and call options, ABHA ID/Email/Guest sign-in alternatives.
 -   **Onboarding:** Multi-slide carousel introducing features like data ownership, offline-first capabilities, and settings.
 -   **Home Dashboard:** Sticky header, quick action cards (Upload, AI Insights, Emergency, Medications), recent documents, AI health insights, nearby clinics/labs, and a fixed bottom navigation.
--   **Vault Document Timeline:** Secure document vault with sticky header, search functionality, type filters (All/Prescriptions/Lab/Imaging/Bills), document timeline with cards showing title/provider/date/tags, floating action button (FAB) with add menu (Camera/File Upload/QR Scan/DICOM Import), offline sync banner, and empty state. All interactions are stubbed for MVP.
+-   **Vault Document Timeline:** Secure document vault with sticky header, search functionality, type filters (All/Prescriptions/Lab/Imaging/Bills), document timeline with cards showing title/provider/date/tags, floating action button (FAB) with add menu (Camera/File Upload/QR Scan/DICOM Import), offline sync banner, and empty state.
+-   **Add Document Wizard:** 4-step wizard modal for adding documents with multiple capture methods (Camera/Upload/QR/DICOM), simulated processing with quality indicators, OCR metadata editing with confidence scores, summary review, and success confirmation. Supports bilingual UI and bidirectional navigation.
 -   **Security:** End-to-end encryption messaging (UI), privacy-first design, planned ABHA ID integration, and secure vault implementation.
 
 **System Design Choices:**
@@ -75,6 +76,27 @@ MediLocker is a responsive health data management web application designed to pr
 -   Full bilingual support (EN/HI) with complete translation keys
 -   All data-testid attributes present for comprehensive testing
 -   Comprehensive automated testing passed (13 test scenarios covering navigation, filters, search, animations, responsive design)
+
+**Screen 6 - Add Document Wizard Implemented:**
+-   Created `MediLockerAddDocumentWizard.tsx` component with complete 4-step wizard flow
+-   **Step 1 - Source Selection:** Four capture methods (Camera, Upload, QR/ABHA Import, DICOM) with visual indicators
+-   **Step 2 - Capture/Upload:** Method-specific UIs with simulated processing:
+    -   Camera: Live capture frame with quality detection (detecting → glare → good quality)
+    -   Upload: File upload area with processing indicator and preview
+    -   QR: ABHA import interface with processing and success confirmation
+    -   DICOM: Medical imaging ZIP import with extraction indicator
+-   **Step 3 - Metadata Editing:** OCR field editing with document type selector (Lab/Prescription/Imaging/Bill/Other), provider name, date, title fields, confidence indicators, and tags display
+-   **Step 4 - Summary:** Final review showing file info, document metadata, and offline notice if applicable
+-   **Success Modal:** Animated checkmark with "Document Added Successfully!" message and options to "Go to Vault" or "Add Another"
+-   Integrated as full-screen modal overlay on vault page triggered by FAB menu options
+-   Progress indicator showing current step (dots 1/2/3/4) with visual feedback
+-   Language toggle (EN/HI) and online/offline mode toggle within wizard
+-   Proper state management with completion/cancellation handlers
+-   Bidirectional navigation with back buttons on each step
+-   Method-specific file naming: captured_document.jpg (Camera), uploaded_document.pdf (Upload), abha_imported_record.pdf (QR), medical_imaging.zip (DICOM)
+-   Full bilingual support with all translation keys
+-   Comprehensive data-testid attributes for all interactive elements
+-   Automated testing passed (7 test scenarios covering all capture methods, navigation, language toggle, responsive design at mobile/tablet/desktop)
 
 ## External Dependencies
 
