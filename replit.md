@@ -44,7 +44,7 @@ MediLocker is a responsive web application for secure, encrypted management of m
 -   **Add Document Wizard:** 4-step modal for document addition (capture, processing, OCR metadata editing, review, success). Supports bilingual UI and bidirectional navigation.
 -   **Consent Center:** Privacy-focused consent management with Active/Pending/Expired tabs, role-specific consent cards, revoke/renew actions, audit log.
 -   **Grant Consent Flow:** 5-step wizard for granting consent (recipient, scope, duration/purpose, confirmation with PIN/biometric, success with QR/share options).
--   **Emergency Page:** Displays emergency info (blood group, allergies, contacts) and features like nominee management.
+-   **Emergency Card Screen:** Comprehensive emergency card with QR code for offline scanning, patient information (name, blood group, allergies, chronic conditions, medications, age, address), recent medical data (last 3 prescriptions, last 2 lab reports), nominee access section with manage button, and Hindi localization banner with Globe icon.
 -   **Nominee Management:** Lists nominees with details, provides a 3-step wizard to add new nominees, and allows revoking access.
 -   **Security:** End-to-end encryption (UI), privacy-first design, planned ABHA ID integration, secure vault.
 
