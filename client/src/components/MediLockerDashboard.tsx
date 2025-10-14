@@ -58,7 +58,7 @@ const healthInsight: HealthInsight = {
 
 const translations = {
   en: {
-    appName: 'MediLocker',
+    appName: 'Arogya Vault',
     quickActions: 'Quick Actions',
     quickActionsSubtitle: 'Manage your health records',
     uploadRecords: 'Upload Records',
@@ -93,7 +93,7 @@ const translations = {
     profile: 'Profile'
   },
   hi: {
-    appName: 'मेडीलॉकर',
+    appName: 'आरोग्य वॉल्ट',
     quickActions: 'त्वरित कार्रवाई',
     quickActionsSubtitle: 'अपने स्वास्थ्य रिकॉर्ड प्रबंधित करें',
     uploadRecords: 'रिकॉर्ड अपलोड करें',
