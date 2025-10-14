@@ -7,6 +7,18 @@ MediLocker is a responsive web application for secure, encrypted management of m
 ## Recent Changes
 
 **October 14, 2025:**
+- **Profile Settings Screen:** Implemented comprehensive settings management screen with full navigation integration
+  - Created ProfileSettingsScreen component with four main sections: Language & Accessibility, Security, Health & Nominee, Legal & Support
+  - Language toggle supports EN/HI with real-time UI updates
+  - Guided Mode toggle for accessibility (larger text, icons)
+  - Security settings: PIN setup and biometric authentication options
+  - Health management: Quick access to Emergency Card and Nominee Management
+  - Legal/Support: Help & FAQ, Contact Support, Privacy Policy, Terms of Service (stubbed for backend)
+  - Logout button with confirmation flow
+  - Fully wired navigation: Home → Profile (via bottom nav), Profile → Emergency/Nominees, Profile → Home (back button)
+  - All interactive elements have data-testid attributes for testing
+  - Bilingual support throughout with translation keys
+
 - **Emergency Card Edit Functionality:** Added comprehensive edit modal for patient information with proper form validation
   - Implemented using react-hook-form with zodResolver for Zod schema validation
   - All patient fields are editable: Name, Blood Group, Allergies, Chronic Conditions, Current Medications, Age, Address
@@ -57,6 +69,7 @@ MediLocker is a responsive web application for secure, encrypted management of m
 -   **Grant Consent Flow:** 5-step wizard for granting consent (recipient, scope, duration/purpose, confirmation with PIN/biometric, success with QR/share options).
 -   **Emergency Card Screen:** Comprehensive emergency card with QR code for offline scanning, patient information (name, blood group, allergies, chronic conditions, medications, age, address), recent medical data (last 3 prescriptions, last 2 lab reports), nominee access section with manage button, and Hindi localization banner with Globe icon. Features edit functionality with validated form (using react-hook-form + Zod) to update patient details.
 -   **Nominee Management:** Lists nominees with details, provides a 3-step wizard to add new nominees, and allows revoking access.
+-   **Profile Settings Screen:** Comprehensive settings management with Language & Accessibility (EN/HI toggle, Guided Mode), Security (PIN setup, biometric auth), Health & Nominee (Emergency Card access, Manage Nominees), Legal & Support (FAQ, Contact, Privacy, Terms), and Logout functionality. Accessible via bottom navigation Profile tab.
 -   **Security:** End-to-end encryption (UI), privacy-first design, planned ABHA ID integration, secure vault.
 
 **System Design Choices:**
