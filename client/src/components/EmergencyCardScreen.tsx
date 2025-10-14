@@ -1,4 +1,5 @@
-import { ArrowLeft, Edit, Share2, User, Droplet, AlertCircle, Heart, Pill, Calendar, MapPin, Phone, FileText, FlaskConical, Globe } from 'lucide-react';
+import { useState } from 'react';
+import { ArrowLeft, Edit, Share2, User, Droplet, AlertCircle, Heart, Pill, Calendar, MapPin, Phone, FileText, FlaskConical, Globe, X, Save } from 'lucide-react';
 
 type EmergencyCardScreenProps = {
   patientId?: string;
@@ -23,10 +24,20 @@ type EmergencyCardScreenProps = {
     date: string;
   }>;
   onBack?: () => void;
-  onEdit?: () => void;
   onPrintShare?: () => void;
   onManageNominee?: () => void;
   onQRTap?: () => void;
+  onSave?: (data: PatientData) => void;
+};
+
+type PatientData = {
+  patientName: string;
+  bloodGroup: string;
+  allergies: string;
+  chronicConditions: string;
+  currentMedications: string;
+  age: number;
+  address: string;
 };
 
 const formatDate = (dateStr: string) => {
@@ -38,17 +49,19 @@ const formatDate = (dateStr: string) => {
   });
 };
 
+const bloodGroupOptions = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+
 export const EmergencyCardScreen = (props: EmergencyCardScreenProps) => {
   const {
     patientId = '2025-RBH-0213',
-    patientName = 'Rudraksh Bharti',
-    bloodGroup = 'B+',
-    allergies = 'Penicillin',
-    chronicConditions = 'Diabetes Type 2',
-    currentMedications = 'Metformin',
+    patientName: initialPatientName = 'Rudraksh Bharti',
+    bloodGroup: initialBloodGroup = 'B+',
+    allergies: initialAllergies = 'Penicillin',
+    chronicConditions: initialChronicConditions = 'Diabetes Type 2',
+    currentMedications: initialCurrentMedications = 'Metformin',
     dateOfBirth = '1990-05-15',
-    age = 34,
-    address = 'Mumbai, Maharashtra',
+    age: initialAge = 34,
+    address: initialAddress = 'Mumbai, Maharashtra',
     nomineeName = 'Amit Bharti',
     nomineeRelation = 'Brother',
     nomineePhone = '+91 98765 43210',
@@ -71,11 +84,61 @@ export const EmergencyCardScreen = (props: EmergencyCardScreenProps) => {
       date: '2024-12-20'
     }],
     onBack = () => console.log('Back clicked'),
-    onEdit = () => console.log('Edit clicked'),
     onPrintShare = () => console.log('Print/Share clicked'),
     onManageNominee = () => console.log('Manage nominee clicked'),
-    onQRTap = () => console.log('QR tapped')
+    onQRTap = () => console.log('QR tapped'),
+    onSave = (data) => console.log('Save clicked', data)
   } = props;
+
+  // State for patient data
+  const [patientName, setPatientName] = useState(initialPatientName);
+  const [bloodGroup, setBloodGroup] = useState(initialBloodGroup);
+  const [allergies, setAllergies] = useState(initialAllergies);
+  const [chronicConditions, setChronicConditions] = useState(initialChronicConditions);
+  const [currentMedications, setCurrentMedications] = useState(initialCurrentMedications);
+  const [age, setAge] = useState(initialAge);
+  const [address, setAddress] = useState(initialAddress);
+
+  // Edit modal state
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editForm, setEditForm] = useState<PatientData>({
+    patientName: patientName,
+    bloodGroup: bloodGroup,
+    allergies: allergies,
+    chronicConditions: chronicConditions,
+    currentMedications: currentMedications,
+    age: age,
+    address: address
+  });
+
+  const handleEditClick = () => {
+    setEditForm({
+      patientName,
+      bloodGroup,
+      allergies,
+      chronicConditions,
+      currentMedications,
+      age,
+      address
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const handleSave = () => {
+    setPatientName(editForm.patientName);
+    setBloodGroup(editForm.bloodGroup);
+    setAllergies(editForm.allergies);
+    setChronicConditions(editForm.chronicConditions);
+    setCurrentMedications(editForm.currentMedications);
+    setAge(editForm.age);
+    setAddress(editForm.address);
+    onSave(editForm);
+    setIsEditModalOpen(false);
+  };
+
+  const handleCancel = () => {
+    setIsEditModalOpen(false);
+  };
 
   return (
     <div className="min-h-screen w-full bg-white overflow-y-auto" data-testid="emergency-card-screen">
@@ -91,7 +154,7 @@ export const EmergencyCardScreen = (props: EmergencyCardScreenProps) => {
         </button>
         <h1 className="text-xl font-bold text-gray-900" data-testid="text-page-title">Emergency Card</h1>
         <button 
-          onClick={onEdit} 
+          onClick={handleEditClick} 
           className="p-2 -mr-2 hover:bg-gray-100 rounded-full transition-colors" 
           aria-label="Edit emergency card"
           data-testid="button-edit"
@@ -338,6 +401,171 @@ export const EmergencyCardScreen = (props: EmergencyCardScreenProps) => {
           <p className="text-xs text-blue-700">आपातकालीन कार्ड • इस क्यूआर को स्कैन करें • ऑफ़लाइन में भी काम करता है</p>
         </div>
       </div>
+
+      {/* Edit Modal */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" data-testid="edit-modal">
+          <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-2xl">
+              <h2 className="text-xl font-bold text-gray-900" data-testid="text-edit-modal-title">Edit Patient Info</h2>
+              <button
+                onClick={handleCancel}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                aria-label="Close"
+                data-testid="button-close-edit-modal"
+              >
+                <X className="w-5 h-5 text-gray-700" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 space-y-4">
+              {/* Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="edit-name">
+                  <User className="w-4 h-4 inline mr-1" />
+                  Name
+                </label>
+                <input
+                  id="edit-name"
+                  type="text"
+                  value={editForm.patientName}
+                  onChange={(e) => setEditForm({ ...editForm, patientName: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter full name"
+                  data-testid="input-edit-name"
+                />
+              </div>
+
+              {/* Blood Group */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="edit-blood-group">
+                  <Droplet className="w-4 h-4 inline mr-1" />
+                  Blood Group
+                </label>
+                <select
+                  id="edit-blood-group"
+                  value={editForm.bloodGroup}
+                  onChange={(e) => setEditForm({ ...editForm, bloodGroup: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  data-testid="select-edit-blood-group"
+                >
+                  {bloodGroupOptions.map((group) => (
+                    <option key={group} value={group}>{group}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Allergies */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="edit-allergies">
+                  <AlertCircle className="w-4 h-4 inline mr-1" />
+                  Allergies
+                </label>
+                <input
+                  id="edit-allergies"
+                  type="text"
+                  value={editForm.allergies}
+                  onChange={(e) => setEditForm({ ...editForm, allergies: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g., Penicillin, Peanuts"
+                  data-testid="input-edit-allergies"
+                />
+              </div>
+
+              {/* Chronic Conditions */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="edit-chronic-conditions">
+                  <Heart className="w-4 h-4 inline mr-1" />
+                  Chronic Conditions
+                </label>
+                <input
+                  id="edit-chronic-conditions"
+                  type="text"
+                  value={editForm.chronicConditions}
+                  onChange={(e) => setEditForm({ ...editForm, chronicConditions: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g., Diabetes Type 2, Hypertension"
+                  data-testid="input-edit-chronic-conditions"
+                />
+              </div>
+
+              {/* Current Medications */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="edit-medications">
+                  <Pill className="w-4 h-4 inline mr-1" />
+                  Current Medications
+                </label>
+                <input
+                  id="edit-medications"
+                  type="text"
+                  value={editForm.currentMedications}
+                  onChange={(e) => setEditForm({ ...editForm, currentMedications: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g., Metformin, Aspirin"
+                  data-testid="input-edit-medications"
+                />
+              </div>
+
+              {/* Age */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="edit-age">
+                  <Calendar className="w-4 h-4 inline mr-1" />
+                  Age
+                </label>
+                <input
+                  id="edit-age"
+                  type="number"
+                  value={editForm.age}
+                  onChange={(e) => setEditForm({ ...editForm, age: parseInt(e.target.value) || 0 })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter age"
+                  min="0"
+                  max="150"
+                  data-testid="input-edit-age"
+                />
+              </div>
+
+              {/* Address */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="edit-address">
+                  <MapPin className="w-4 h-4 inline mr-1" />
+                  Address
+                </label>
+                <textarea
+                  id="edit-address"
+                  value={editForm.address}
+                  onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter address"
+                  rows={3}
+                  data-testid="input-edit-address"
+                />
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 flex gap-3 rounded-b-2xl">
+              <button
+                onClick={handleCancel}
+                className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                data-testid="button-cancel-edit"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                data-testid="button-save-edit"
+              >
+                <Save className="w-4 h-4" />
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

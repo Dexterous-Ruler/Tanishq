@@ -1,16 +1,21 @@
 import { useLocation } from 'wouter';
 import { EmergencyCardScreen } from '@/components/EmergencyCardScreen';
 
+type PatientData = {
+  patientName: string;
+  bloodGroup: string;
+  allergies: string;
+  chronicConditions: string;
+  currentMedications: string;
+  age: number;
+  address: string;
+};
+
 export default function EmergencyPage() {
   const [, setLocation] = useLocation();
 
   const handleBack = () => {
     setLocation('/home');
-  };
-
-  const handleEdit = () => {
-    console.log('Edit emergency card');
-    alert('Edit emergency card feature coming soon!');
   };
 
   const handlePrintShare = () => {
@@ -27,13 +32,18 @@ export default function EmergencyPage() {
     alert('QR code expanded view coming soon!');
   };
 
+  const handleSave = (data: PatientData) => {
+    console.log('Patient data saved:', data);
+    // In a real app, this would save to backend/storage
+  };
+
   return (
     <EmergencyCardScreen
       onBack={handleBack}
-      onEdit={handleEdit}
       onPrintShare={handlePrintShare}
       onManageNominee={handleManageNominee}
       onQRTap={handleQRTap}
+      onSave={handleSave}
     />
   );
 }
