@@ -74,7 +74,7 @@ export default function HomePage() {
     } else if (tabId === 'emergency') {
       setLocation('/emergency');
     } else if (tabId === 'profile') {
-      alert('Profile settings coming soon!');
+      setLocation('/profile');
     }
   };
 
