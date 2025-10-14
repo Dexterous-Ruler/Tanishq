@@ -13,6 +13,7 @@ import ConsentPage from "@/pages/consent";
 import EmergencyPage from "@/pages/emergency";
 import NomineeManagementPage from "@/pages/nominee-management";
 import ProfilePage from "@/pages/profile";
+import DocumentDetailPage from "@/pages/document-detail";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -35,6 +36,7 @@ function Router() {
       <Route path="/emergency" component={EmergencyPage} />
       <Route path="/nominee-management" component={NomineeManagementPage} />
       <Route path="/profile" component={ProfilePage} />
+      <Route path="/document/:id" component={DocumentDetailPage} />
       
       {/* Redirect to auth if not enabled */}
       {!featureFlags.screens.auth && <Route path="/" component={NotFound} />}
