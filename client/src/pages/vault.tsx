@@ -25,7 +25,7 @@ export default function VaultPage() {
 
   const handleDocumentClick = (docId: string) => {
     console.log(`📄 Document clicked: ${docId}`);
-    alert(`Document viewer for ID: ${docId}\n\n(Document viewer coming soon)`);
+    setLocation(`/document/${docId}`);
   };
 
   const handleAddCamera = () => {
