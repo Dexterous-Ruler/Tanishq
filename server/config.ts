@@ -57,6 +57,30 @@ export const config = {
     port: parseInt(process.env.PORT || "3000", 10),
     nodeEnv: process.env.NODE_ENV || "development",
   },
+
+  // Email Configuration
+  email: {
+    provider: (process.env.EMAIL_PROVIDER || "smtp") as "resend" | "smtp" | "mock",
+    from: process.env.EMAIL_FROM || "team@arogyavault.me",
+    fromName: process.env.EMAIL_FROM_NAME || "Arogya Vault",
+    resend: {
+      apiKey: process.env.RESEND_API_KEY || "",
+    },
+    smtp: {
+      host: process.env.SMTP_HOST || "smtp.resend.com",
+      port: parseInt(process.env.SMTP_PORT || "465", 10),
+      secure: process.env.SMTP_SECURE !== "false", // true for 465, false for other ports
+      username: process.env.SMTP_USERNAME || "resend",
+      password: process.env.SMTP_PASSWORD || "",
+    },
+  },
+
+  // Push Notification Configuration (VAPID)
+  push: {
+    publicKey: process.env.VAPID_PUBLIC_KEY || "",
+    privateKey: process.env.VAPID_PRIVATE_KEY || "",
+    subject: process.env.VAPID_SUBJECT || "mailto:team@arogyavault.me", // Contact email for VAPID
+  },
 } as const;
 
 // Type exports for configuration

@@ -1,19 +1,52 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArogyaVaultDashboard } from '@/components/MediLockerDashboard';
 import { useLocation } from 'wouter';
 import { useDocuments } from '@/hooks/useDocuments';
 import { useUserProfile } from '@/hooks/useUser';
 import { useHealthInsights } from '@/hooks/useHealth';
+import { useNearbyClinics } from '@/hooks/useClinics';
 import { getDocumentPreview } from '@/lib/api/documents';
 import { useQueries } from '@tanstack/react-query';
+import { useAuthStatus } from '@/hooks/useAuth';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { ChatbotWidget } from '@/components/ChatbotWidget';
 
 export default function HomePage() {
   const [guidedMode, setGuidedMode] = useState(false);
+  const [isChatbotOpen, setIsChatbotOpen] = useState(false);
   const [, setLocation] = useLocation();
+  const { data: authStatus } = useAuthStatus();
+  const isAuthenticated = authStatus?.authenticated === true;
 
   // Fetch real documents data (limit to 3 most recent)
   const { data: documentsData, isLoading: documentsLoading } = useDocuments({});
   const { data: userProfile } = useUserProfile();
+  
+  // Push notifications setup
+  const {
+    isSupported: isPushSupported,
+    permission: pushPermission,
+    isSubscribed,
+    subscribe,
+    requestPermission,
+    registration,
+  } = usePushNotifications();
+
+  // Auto-register push notifications when user is logged in and permission is granted
+  useEffect(() => {
+    if (!isAuthenticated || !isPushSupported) {
+      return;
+    }
+
+    // Only auto-subscribe if permission is already granted and not yet subscribed
+    if (pushPermission === 'granted' && !isSubscribed && registration) {
+      console.log('[Home] Auto-subscribing to push notifications');
+      subscribe().catch((error) => {
+        console.error('[Home] Failed to auto-subscribe to push notifications:', error);
+        // Don't show error to user - they can enable manually in settings
+      });
+    }
+  }, [isAuthenticated, isPushSupported, pushPermission, isSubscribed, registration, subscribe]);
   
   // Fetch AI health insights
   const { data: healthInsightsData, isLoading: healthInsightsLoading } = useHealthInsights();
@@ -28,6 +61,20 @@ export default function HomePage() {
         status: 'good' as const,
         message: 'No documents available. Upload lab reports to get started with AI health insights.'
       };
+
+  // Fetch nearby hospitals (100km radius)
+  const { data: clinicsData, isLoading: clinicsLoading } = useNearbyClinics(100000); // 100km radius
+  const nearbyClinics = clinicsData?.success ? clinicsData.clinics
+    .filter(clinic => clinic.distance <= 100) // Only show hospitals within 100km
+    .slice(0, 10) // Show up to 10 hospitals
+    .map(clinic => ({
+      id: clinic.id,
+      name: clinic.name,
+      address: clinic.address,
+      distance: clinic.distance,
+      latitude: clinic.latitude,
+      longitude: clinic.longitude,
+    })) : [];
 
   // Get recent documents (limit to 3)
   const recentDocIds = documentsData?.documents?.slice(0, 3).map(doc => doc.id) || [];
@@ -81,8 +128,7 @@ export default function HomePage() {
 
   const handleAiInsightsClick = () => {
     console.log('📊 AI Insights clicked');
-    // For now, show alert. Later can route to insights page
-    alert('AI Insights feature coming soon!');
+    setLocation('/ai-insights');
   };
 
   const handleEmergencyCardClick = () => {
@@ -92,8 +138,7 @@ export default function HomePage() {
 
   const handleMedicationsClick = () => {
     console.log('💊 Medications clicked');
-    // For now, show alert. Later can route to medications page
-    alert('Medications feature coming soon!');
+    setLocation('/medications');
   };
 
   const handleViewAllDocumentsClick = () => {
@@ -114,9 +159,22 @@ export default function HomePage() {
     alert('Full health report coming soon!');
   };
 
-  const handleDirectionsClick = (clinic: string) => {
-    console.log(`🗺️ Directions to ${clinic}`);
-    alert(`Directions to ${clinic} - Maps integration coming soon!`);
+  const handleDirectionsClick = (clinic: { name: string; latitude?: number; longitude?: number; address?: string }) => {
+    console.log(`🗺️ Directions to ${clinic.name}`, clinic);
+    
+    if (clinic.latitude && clinic.longitude && !isNaN(clinic.latitude) && !isNaN(clinic.longitude)) {
+      // Open Google Maps with directions using exact coordinates
+      const url = `https://www.google.com/maps/dir/?api=1&destination=${clinic.latitude},${clinic.longitude}`;
+      window.open(url, '_blank');
+    } else if (clinic.address) {
+      // Fallback: search by address
+      const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(clinic.address)}`;
+      window.open(url, '_blank');
+    } else {
+      // Last resort: search by name
+      const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(clinic.name)}`;
+      window.open(url, '_blank');
+    }
   };
 
   const handleBottomNavClick = (tabId: string) => {
@@ -133,26 +191,37 @@ export default function HomePage() {
     }
   };
 
+  const handleChatbotClick = () => {
+    console.log('💬 Chatbot clicked');
+    setIsChatbotOpen(true);
+  };
+
   return (
-    <ArogyaVaultDashboard
-      guidedMode={guidedMode}
-      isOffline={false}
-      pendingActions={0}
-      recentDocuments={recentDocuments}
-      isLoadingDocuments={documentsLoading}
-      healthInsight={healthInsight}
-      onMicClick={handleMicClick}
-      onNotificationsClick={handleNotificationsClick}
-      onSearchClick={handleSearchClick}
-      onUploadRecordsClick={handleUploadRecordsClick}
-      onAiInsightsClick={handleAiInsightsClick}
-      onEmergencyCardClick={handleEmergencyCardClick}
-      onMedicationsClick={handleMedicationsClick}
-      onViewAllDocumentsClick={handleViewAllDocumentsClick}
-      onDocumentClick={handleDocumentClick}
-      onViewFullReportClick={handleViewFullReportClick}
-      onDirectionsClick={handleDirectionsClick}
-      onBottomNavClick={handleBottomNavClick}
-    />
+    <>
+      <ArogyaVaultDashboard
+        guidedMode={guidedMode}
+        isOffline={false}
+        pendingActions={0}
+        recentDocuments={recentDocuments}
+        isLoadingDocuments={documentsLoading}
+        healthInsight={healthInsight}
+        nearbyClinics={nearbyClinics}
+        isLoadingClinics={clinicsLoading}
+        onMicClick={handleMicClick}
+        onNotificationsClick={handleNotificationsClick}
+        onSearchClick={handleSearchClick}
+        onUploadRecordsClick={handleUploadRecordsClick}
+        onAiInsightsClick={handleAiInsightsClick}
+        onEmergencyCardClick={handleEmergencyCardClick}
+        onMedicationsClick={handleMedicationsClick}
+        onViewAllDocumentsClick={handleViewAllDocumentsClick}
+        onDocumentClick={handleDocumentClick}
+        onViewFullReportClick={handleViewFullReportClick}
+        onDirectionsClick={handleDirectionsClick}
+        onBottomNavClick={handleBottomNavClick}
+        onChatbotClick={handleChatbotClick}
+      />
+      <ChatbotWidget isOpen={isChatbotOpen} onOpenChange={setIsChatbotOpen} />
+    </>
   );
 }

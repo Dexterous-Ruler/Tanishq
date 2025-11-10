@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight, User, Shield, Globe, Users, FileText, HelpCircle, LogOut, CheckCircle, XCircle, Edit2, Lock, Fingerprint, Heart, AlertCircle, Phone, Mail } from 'lucide-react';
+import { ChevronLeft, ChevronRight, User, Shield, Globe, Users, FileText, HelpCircle, LogOut, CheckCircle, XCircle, Edit2, Lock, Fingerprint, Heart, AlertCircle, Phone, Mail, Bell } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useTranslation } from '@/i18n/useTranslation';
 import { LanguageSelector } from '@/i18n/LanguageSelector';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { Button } from '@/components/ui/button';
 
 type ProfileSettingsScreenProps = {
   userName?: string;
@@ -78,6 +80,19 @@ export const ProfileSettingsScreen = ({
   const { translations: t, language: currentLanguage } = useTranslation();
   const [guidedMode, setGuidedMode] = useState(isGuidedModeEnabled);
   const [biometric, setBiometric] = useState(isBiometricEnabled);
+  
+  // Push notification hooks
+  const {
+    isSupported: isPushSupported,
+    permission: pushPermission,
+    isSubscribed,
+    isLoading: isPushLoading,
+    error: pushError,
+    requestPermission: requestPushPermission,
+    subscribe: subscribeToPush,
+    unsubscribe: unsubscribeFromPush,
+    sendTest: sendTestNotification,
+  } = usePushNotifications();
 
   // LanguageSelector handles language changes directly via i18next context
   // No need for useEffect - language changes are handled automatically
@@ -241,6 +256,111 @@ export const ProfileSettingsScreen = ({
               </div>
             </div>
           </motion.div>
+
+          {/* Notifications Section */}
+          {isPushSupported && (
+            <motion.div variants={itemVariants} className="mx-4 md:mx-6 lg:mx-8 mb-4 md:mb-6">
+              <h3 className="text-sm md:text-base lg:text-lg font-semibold text-gray-500 uppercase tracking-wide mb-3 md:mb-4 px-1">
+                {isHindi ? 'अधिसूचनाएं' : 'Notifications'}
+              </h3>
+              <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                <div className="p-4 md:p-6 lg:p-8">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-3 md:space-x-4 flex-1">
+                      <div className="p-2 md:p-2.5 lg:p-3 bg-blue-50 rounded-lg">
+                        <Bell className="w-5 h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 text-blue-600" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm md:text-base lg:text-lg font-semibold text-gray-900">
+                          {isHindi ? 'ब्राउज़र नोटिफिकेशन' : 'Browser Notifications'}
+                        </p>
+                        <p className="text-xs md:text-sm lg:text-base text-gray-500 mt-0.5">
+                          {isHindi 
+                            ? 'दवा की याद दिलाने के लिए नोटिफिकेशन प्राप्त करें' 
+                            : 'Receive notifications for medication reminders'}
+                        </p>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={isSubscribed ? unsubscribeFromPush : subscribeToPush}
+                      disabled={isPushLoading || pushPermission !== 'granted'}
+                      className={`relative inline-flex h-7 w-12 md:h-8 md:w-14 lg:h-9 lg:w-16 items-center rounded-full transition-colors ${
+                        isSubscribed && pushPermission === 'granted' ? 'bg-green-600' : 'bg-gray-300'
+                      } ${isPushLoading || pushPermission !== 'granted' ? 'opacity-50 cursor-not-allowed' : ''}`} 
+                      role="switch" 
+                      aria-checked={isSubscribed}
+                      data-testid="toggle-push-notifications"
+                    >
+                      <span className={`inline-block h-5 w-5 md:h-6 md:w-6 lg:h-7 lg:w-7 transform rounded-full bg-white transition-transform ${
+                        isSubscribed && pushPermission === 'granted' ? 'md:translate-x-7 lg:translate-x-8 translate-x-6' : 'translate-x-1'
+                      }`} />
+                    </button>
+                  </div>
+                  
+                  {/* Permission Status */}
+                  {pushPermission === 'default' && (
+                    <div className="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <p className="text-xs md:text-sm text-yellow-800 mb-2">
+                        {isHindi 
+                          ? 'नोटिफिकेशन के लिए अनुमति आवश्यक है' 
+                          : 'Permission required for notifications'}
+                      </p>
+                      <Button
+                        onClick={requestPushPermission}
+                        disabled={isPushLoading}
+                        className="w-full text-xs md:text-sm py-2 h-auto"
+                        size="sm"
+                      >
+                        {isHindi ? 'अनुमति दें' : 'Grant Permission'}
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {pushPermission === 'denied' && (
+                    <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-xs md:text-sm text-red-800">
+                        {isHindi 
+                          ? 'नोटिफिकेशन अनुमति अस्वीकार की गई है। ब्राउज़र सेटिंग्स में सक्षम करें।' 
+                          : 'Notification permission denied. Please enable in browser settings.'}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {pushPermission === 'granted' && isSubscribed && (
+                    <div className="space-y-2">
+                      <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <p className="text-xs md:text-sm text-green-800 flex items-center space-x-2">
+                          <CheckCircle className="w-4 h-4" />
+                          <span>
+                            {isHindi 
+                              ? 'नोटिफिकेशन सक्रिय हैं' 
+                              : 'Notifications are active'}
+                          </span>
+                        </p>
+                      </div>
+                      <Button
+                        onClick={sendTestNotification}
+                        disabled={isPushLoading}
+                        variant="outline"
+                        className="w-full text-xs md:text-sm py-2 h-auto"
+                        size="sm"
+                      >
+                        {isHindi ? 'टेस्ट नोटिफिकेशन भेजें' : 'Send Test Notification'}
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {pushError && (
+                    <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-xs md:text-sm text-red-800">
+                        {pushError}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
 
           {/* Security Section */}
           <motion.div variants={itemVariants} className="mx-4 md:mx-6 lg:mx-8 mb-4 md:mb-6">

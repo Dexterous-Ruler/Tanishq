@@ -6,6 +6,7 @@ import session from "express-session";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { config } from "./config";
+import { reminderScheduler } from "./services/reminderScheduler";
 import * as path from "path";
 
 const app = express();
@@ -84,5 +85,27 @@ app.use((req, res, next) => {
   const port = parseInt(process.env.PORT || '3000', 10);
   server.listen(port, "0.0.0.0", () => {
     log(`serving on port ${port}`);
+    
+    // Start reminder scheduler
+    reminderScheduler.start();
+  });
+
+  // Graceful shutdown
+  process.on('SIGTERM', () => {
+    log('SIGTERM received, shutting down gracefully...');
+    reminderScheduler.stop();
+    server.close(() => {
+      log('Server closed');
+      process.exit(0);
+    });
+  });
+
+  process.on('SIGINT', () => {
+    log('SIGINT received, shutting down gracefully...');
+    reminderScheduler.stop();
+    server.close(() => {
+      log('Server closed');
+      process.exit(0);
+    });
   });
 })();

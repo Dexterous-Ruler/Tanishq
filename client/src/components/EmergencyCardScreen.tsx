@@ -3,6 +3,8 @@ import { ArrowLeft, Edit, Share2, User, Droplet, AlertCircle, Heart, Pill, Calen
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { EmergencyQRModal } from './EmergencyQRModal';
+import { printEmergencyCard, shareEmergencyCardAsImage } from '@/utils/emergencyPrint';
 import {
   Form,
   FormControl,
@@ -44,6 +46,8 @@ type EmergencyCardScreenProps = {
     type: string;
     date: string;
   }>;
+  qrCodeDataURL?: string;
+  qrUrl?: string;
   onBack?: () => void;
   onPrintShare?: () => void;
   onManageNominee?: () => void;
@@ -115,10 +119,12 @@ export const EmergencyCardScreen = (props: EmergencyCardScreenProps) => {
       type: 'HbA1c Test',
       date: '2024-12-20'
     }],
+    qrCodeDataURL,
+    qrUrl,
     onBack = () => console.log('Back clicked'),
-    onPrintShare = () => console.log('Print/Share clicked'),
+    onPrintShare,
     onManageNominee = () => console.log('Manage nominee clicked'),
-    onQRTap = () => console.log('QR tapped'),
+    onQRTap,
     onSave = (data) => console.log('Save clicked', data)
   } = props;
 
@@ -133,6 +139,9 @@ export const EmergencyCardScreen = (props: EmergencyCardScreenProps) => {
 
   // Edit modal state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  
+  // QR modal state
+  const [isQRModalOpen, setIsQRModalOpen] = useState(false);
 
   // Form
   const form = useForm<PatientData>({
@@ -178,6 +187,27 @@ export const EmergencyCardScreen = (props: EmergencyCardScreenProps) => {
     setIsEditModalOpen(false);
   };
 
+  const handleQRTap = () => {
+    if (onQRTap) {
+      onQRTap();
+    } else if (qrCodeDataURL && qrUrl) {
+      setIsQRModalOpen(true);
+    }
+  };
+
+  const handlePrintShare = async () => {
+    if (onPrintShare) {
+      onPrintShare();
+    } else {
+      try {
+        await shareEmergencyCardAsImage('emergency-card-content');
+      } catch (error) {
+        console.error('Failed to share emergency card:', error);
+        alert('Failed to share emergency card. Please try again.');
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen w-full bg-white overflow-y-auto" data-testid="emergency-card-screen">
       {/* Top Bar */}
@@ -201,71 +231,42 @@ export const EmergencyCardScreen = (props: EmergencyCardScreenProps) => {
         </button>
       </div>
 
-      {/* Content */}
-      <div className="px-4 py-6 space-y-6 pb-8">
+      {/* Content - Wrapped for print/share */}
+      <div id="emergency-card-content" className="px-4 py-6 space-y-6 pb-8">
         {/* Emergency QR Section */}
         <div className="bg-gradient-to-br from-red-50 to-orange-50 rounded-2xl p-6 flex flex-col items-center border border-red-100" data-testid="qr-section">
           <p className="text-sm text-gray-700 text-center mb-4 max-w-[280px]" data-testid="text-qr-description">
             Scan this QR in emergencies to view critical information
           </p>
           
-          {/* QR Code Placeholder */}
+          {/* QR Code */}
           <div 
-            onClick={onQRTap} 
+            onClick={handleQRTap} 
             className="bg-white rounded-xl p-4 shadow-lg cursor-pointer hover:shadow-xl transition-shadow"
             data-testid="button-qr-code"
           >
-            <div className="w-[200px] h-[200px] bg-white border-2 border-gray-200 rounded-lg flex items-center justify-center">
-              <svg viewBox="0 0 200 200" className="w-full h-full">
-                {/* QR Code pattern */}
-                <rect x="20" y="20" width="60" height="60" fill="#000" />
-                <rect x="30" y="30" width="40" height="40" fill="#fff" />
-                <rect x="40" y="40" width="20" height="20" fill="#000" />
-                
-                <rect x="120" y="20" width="60" height="60" fill="#000" />
-                <rect x="130" y="30" width="40" height="40" fill="#fff" />
-                <rect x="140" y="40" width="20" height="20" fill="#000" />
-                
-                <rect x="20" y="120" width="60" height="60" fill="#000" />
-                <rect x="30" y="130" width="40" height="40" fill="#fff" />
-                <rect x="40" y="140" width="20" height="20" fill="#000" />
-                
-                {/* Random QR pattern */}
-                <rect x="90" y="30" width="10" height="10" fill="#000" />
-                <rect x="110" y="30" width="10" height="10" fill="#000" />
-                <rect x="90" y="50" width="10" height="10" fill="#000" />
-                <rect x="90" y="70" width="10" height="10" fill="#000" />
-                <rect x="110" y="70" width="10" height="10" fill="#000" />
-                <rect x="30" y="90" width="10" height="10" fill="#000" />
-                <rect x="50" y="90" width="10" height="10" fill="#000" />
-                <rect x="70" y="90" width="10" height="10" fill="#000" />
-                <rect x="90" y="90" width="10" height="10" fill="#000" />
-                <rect x="110" y="90" width="10" height="10" fill="#000" />
-                <rect x="130" y="90" width="10" height="10" fill="#000" />
-                <rect x="150" y="90" width="10" height="10" fill="#000" />
-                <rect x="170" y="90" width="10" height="10" fill="#000" />
-                <rect x="90" y="110" width="10" height="10" fill="#000" />
-                <rect x="130" y="110" width="10" height="10" fill="#000" />
-                <rect x="150" y="110" width="10" height="10" fill="#000" />
-                <rect x="170" y="110" width="10" height="10" fill="#000" />
-                <rect x="90" y="130" width="10" height="10" fill="#000" />
-                <rect x="110" y="130" width="10" height="10" fill="#000" />
-                <rect x="90" y="150" width="10" height="10" fill="#000" />
-                <rect x="130" y="150" width="10" height="10" fill="#000" />
-                <rect x="150" y="150" width="10" height="10" fill="#000" />
-                <rect x="90" y="170" width="10" height="10" fill="#000" />
-                <rect x="110" y="170" width="10" height="10" fill="#000" />
-                <rect x="130" y="170" width="10" height="10" fill="#000" />
-                <rect x="170" y="170" width="10" height="10" fill="#000" />
-              </svg>
-            </div>
+            {qrCodeDataURL ? (
+              <img 
+                src={qrCodeDataURL} 
+                alt="Emergency QR Code" 
+                className="w-[200px] h-[200px]"
+                data-testid="qr-code-image"
+              />
+            ) : (
+              <div className="w-[200px] h-[200px] bg-white border-2 border-gray-200 rounded-lg flex items-center justify-center">
+                <div className="text-center text-gray-400">
+                  <p className="text-sm">QR Code</p>
+                  <p className="text-xs mt-1">Loading...</p>
+                </div>
+              </div>
+            )}
           </div>
           
           <p className="text-xs text-gray-600 mt-3 font-mono" data-testid="text-patient-id">ID: {patientId}</p>
           <p className="text-xs text-green-700 mt-2 font-medium" data-testid="text-offline-notice">✓ Works even offline — no login required</p>
           
           <button 
-            onClick={onPrintShare} 
+            onClick={handlePrintShare} 
             className="mt-4 px-4 py-2 border-2 border-red-300 text-red-700 rounded-lg font-medium text-sm hover:bg-red-50 transition-colors flex items-center gap-2"
             data-testid="button-print-share"
           >
@@ -647,6 +648,16 @@ export const EmergencyCardScreen = (props: EmergencyCardScreenProps) => {
             </Form>
           </div>
         </div>
+      )}
+
+      {/* QR Modal */}
+      {isQRModalOpen && qrCodeDataURL && qrUrl && (
+        <EmergencyQRModal
+          qrCodeDataURL={qrCodeDataURL}
+          qrUrl={qrUrl}
+          patientId={patientId}
+          onClose={() => setIsQRModalOpen(false)}
+        />
       )}
     </div>
   );

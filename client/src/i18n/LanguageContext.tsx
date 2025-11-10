@@ -4,32 +4,12 @@ import { LanguageCode, DEFAULT_LANGUAGE, SUPPORTED_LANGUAGES } from './types';
 // Import all translation files - they will be bundled with the app for offline support
 import enTranslations from './translations/en.json';
 import hiTranslations from './translations/hi.json';
-import bnTranslations from './translations/bn.json';
-import teTranslations from './translations/te.json';
-import mrTranslations from './translations/mr.json';
-import taTranslations from './translations/ta.json';
-import guTranslations from './translations/gu.json';
-import knTranslations from './translations/kn.json';
-import mlTranslations from './translations/ml.json';
-import orTranslations from './translations/or.json';
-import paTranslations from './translations/pa.json';
-import asTranslations from './translations/as.json';
 
 type Translations = typeof enTranslations;
 
 const translationMap: Partial<Record<LanguageCode, Translations>> = {
   en: enTranslations,
   hi: hiTranslations,
-  bn: bnTranslations,
-  te: teTranslations,
-  mr: mrTranslations,
-  ta: taTranslations,
-  gu: guTranslations,
-  kn: knTranslations,
-  ml: mlTranslations,
-  or: orTranslations,
-  pa: paTranslations,
-  as: asTranslations,
 };
 
 interface LanguageContextType {
@@ -44,7 +24,7 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 const LANGUAGE_STORAGE_KEY = 'arogya_vault_language';
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  // Load language from localStorage or default to browser language or English
+  // Load language from localStorage or default to English
   const [language, setLanguageState] = useState<LanguageCode>(() => {
     // Try to load from localStorage first
     const saved = localStorage.getItem(LANGUAGE_STORAGE_KEY);
@@ -52,13 +32,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       return saved as LanguageCode;
     }
     
-    // Try to detect browser language
-    const browserLang = navigator.language.split('-')[0];
-    const matchedLang = SUPPORTED_LANGUAGES.find(lang => lang.code === browserLang);
-    if (matchedLang) {
-      return matchedLang.code;
-    }
-    
+    // Always default to English
     return DEFAULT_LANGUAGE;
   });
 

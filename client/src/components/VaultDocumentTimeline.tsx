@@ -22,6 +22,7 @@ type VaultDocumentTimelineProps = {
   language?: 'en' | 'hi';
   documents?: Document[];
   isLoading?: boolean;
+  offlineCount?: number;
   onBack?: () => void;
   onSearch?: (query: string) => void;
   onFilterChange?: (filter: DocumentType) => void;
@@ -131,6 +132,7 @@ const documentTypeIcons: Record<DocumentType, React.ReactNode> = {
 export const VaultDocumentTimeline = ({
   documents: propDocuments,
   isLoading = false,
+  offlineCount: propOfflineCount,
   onBack,
   onSearch,
   onFilterChange,
@@ -146,7 +148,7 @@ export const VaultDocumentTimeline = ({
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [offlineCount] = useState(3);
+  const offlineCount = propOfflineCount ?? 0;
   const [documentThumbnails, setDocumentThumbnails] = useState<Record<string, string>>({});
   const [loadingThumbnails, setLoadingThumbnails] = useState<Set<string>>(new Set());
 

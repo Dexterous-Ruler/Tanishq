@@ -40,9 +40,37 @@ export async function setupVite(app: Express, server: Server) {
     appType: "custom",
   });
 
+  // Serve service worker from public directory
+  const publicPath = path.resolve(import.meta.dirname, "..", "client", "public");
+  if (fs.existsSync(publicPath)) {
+    app.use(express.static(publicPath));
+  }
+
   app.use(vite.middlewares);
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;
+
+    // Don't serve HTML for API routes - let them return JSON errors
+    if (url.startsWith("/api/")) {
+      return res.status(404).json({
+        success: false,
+        message: `API route not found: ${req.method} ${url}`,
+      });
+    }
+
+    // Serve service worker with correct MIME type
+    if (url === "/sw.js") {
+      const swPath = path.resolve(import.meta.dirname, "..", "client", "public", "sw.js");
+      if (fs.existsSync(swPath)) {
+        try {
+          const swContent = await fs.promises.readFile(swPath, "utf-8");
+          res.status(200).set({ "Content-Type": "application/javascript" }).end(swContent);
+          return;
+        } catch (e) {
+          // Fall through to 404
+        }
+      }
+    }
 
     try {
       const clientTemplate = path.resolve(
@@ -68,7 +96,7 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
-  const distPath = path.resolve(import.meta.dirname, "public");
+  const distPath = path.resolve(import.meta.dirname, "..", "dist", "public");
 
   if (!fs.existsSync(distPath)) {
     throw new Error(
@@ -77,6 +105,16 @@ export function serveStatic(app: Express) {
   }
 
   app.use(express.static(distPath));
+
+  // Serve service worker with correct MIME type
+  app.get("/sw.js", (_req, res) => {
+    const swPath = path.resolve(distPath, "sw.js");
+    if (fs.existsSync(swPath)) {
+      res.sendFile(swPath, { headers: { "Content-Type": "application/javascript" } });
+    } else {
+      res.status(404).send("Service worker not found");
+    }
+  });
 
   // fall through to index.html if the file doesn't exist
   app.use("*", (_req, res) => {

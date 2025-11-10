@@ -1,0 +1,22 @@
+{
+  "build": {
+    "command": "npm run build",
+    "cwd": ".",
+    "watchPaths": ["client/**", "server/**", "shared/**"]
+  },
+  "deploy": {
+    "outputDirectory": "dist/public",
+    "rootDirectory": "dist/public"
+  },
+  "functions": {
+    "directory": "functions"
+  },
+  "redirects": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://your-backend-url.workers.dev/api/:path*",
+      "statusCode": 200
+    }
+  ]
+}
+

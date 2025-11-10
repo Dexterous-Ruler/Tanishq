@@ -5,6 +5,7 @@
  */
 
 import { useTranslation as useI18nextTranslation } from 'react-i18next';
+import { useEffect } from 'react';
 import { SUPPORTED_LANGUAGES } from './i18n';
 import type { LanguageCode } from './types';
 

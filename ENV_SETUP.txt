@@ -22,3 +22,28 @@ ENABLE_RATE_LIMIT=true
 PORT=3000
 NODE_ENV=development
 
+# Email Configuration
+# Choose provider: "smtp" (for Supabase SMTP) or "resend" (for Resend API)
+EMAIL_PROVIDER=smtp
+
+# Resend API Configuration (if using EMAIL_PROVIDER=resend)
+RESEND_API_KEY=re_aTQdE3cc_8RK6sjHAMguiYoLcEWh4KSpz
+
+# SMTP Configuration (for Resend SMTP)
+# For Resend SMTP, use your Resend API key as the password
+SMTP_HOST=smtp.resend.com
+SMTP_PORT=465
+SMTP_SECURE=true
+SMTP_USERNAME=resend
+SMTP_PASSWORD=re_aTQdE3cc_8RK6sjHAMguiYoLcEWh4KSpz  # Use your Resend API key here
+
+# Email Sender Configuration
+EMAIL_FROM=team@arogyavault.me
+EMAIL_FROM_NAME=Arogya Vault
+
+# Push Notifications (VAPID)
+# Generate VAPID keys by running: npx tsx server/scripts/generateVAPIDKeys.ts
+VAPID_PUBLIC_KEY=your_vapid_public_key_here
+VAPID_PRIVATE_KEY=your_vapid_private_key_here
+VAPID_SUBJECT=mailto:team@arogyavault.me
+

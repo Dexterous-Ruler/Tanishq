@@ -11,23 +11,11 @@ import Backend from 'i18next-http-backend';
 // Import English translations as fallback
 import enTranslations from './translations/en.json';
 import hiTranslations from './translations/hi.json';
-import bnTranslations from './translations/bn.json';
-import teTranslations from './translations/te.json';
 
 // Supported languages
 export const SUPPORTED_LANGUAGES = [
   { code: 'en', name: 'English', nativeName: 'English' },
   { code: 'hi', name: 'Hindi', nativeName: 'हिंदी' },
-  { code: 'bn', name: 'Bengali', nativeName: 'বাংলা' },
-  { code: 'te', name: 'Telugu', nativeName: 'తెలుగు' },
-  { code: 'mr', name: 'Marathi', nativeName: 'मराठी' },
-  { code: 'ta', name: 'Tamil', nativeName: 'தமிழ்' },
-  { code: 'gu', name: 'Gujarati', nativeName: 'ગુજરાતી' },
-  { code: 'kn', name: 'Kannada', nativeName: 'ಕನ್ನಡ' },
-  { code: 'ml', name: 'Malayalam', nativeName: 'മലയാളം' },
-  { code: 'or', name: 'Odia', nativeName: 'ଓଡ଼ିଆ' },
-  { code: 'pa', name: 'Punjabi', nativeName: 'ਪੰਜਾਬੀ' },
-  { code: 'as', name: 'Assamese', nativeName: 'অসমীয়া' },
 ];
 
 i18n
@@ -42,6 +30,9 @@ i18n
     // Fallback language
     fallbackLng: 'en',
     
+    // Default language (always English)
+    lng: 'en',
+    
     // Supported languages
     supportedLngs: SUPPORTED_LANGUAGES.map(lang => lang.code),
     
@@ -49,19 +40,13 @@ i18n
     defaultNS: 'translation',
     ns: 'translation',
     
-    // Resources for offline support (English, Hindi, Bengali, Telugu)
+    // Resources for offline support (English and Hindi only)
     resources: {
       en: {
         translation: enTranslations,
       },
       hi: {
         translation: hiTranslations,
-      },
-      bn: {
-        translation: bnTranslations,
-      },
-      te: {
-        translation: teTranslations,
       },
     },
     
@@ -88,11 +73,13 @@ i18n
     // Detection options
     detection: {
       // Order of language detection
-      order: ['localStorage', 'navigator', 'htmlTag'],
+      order: ['localStorage', 'htmlTag'],
       // Keys to lookup language from
       lookupLocalStorage: 'arogya_vault_language',
       // Cache user language
       caches: ['localStorage'],
+      // Don't detect from browser - always default to English
+      checkWhitelist: true,
     },
     
     // React i18next options

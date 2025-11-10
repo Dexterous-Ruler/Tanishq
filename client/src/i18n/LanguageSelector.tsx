@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Globe, Check } from 'lucide-react';
 import { useTranslation } from './useTranslation';
 import { LanguageCode } from './types';
+import { useUpdateSettings } from '@/hooks/useUser';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Select,
   SelectContent,
@@ -17,13 +19,35 @@ interface LanguageSelectorProps {
 
 export function LanguageSelector({ className, variant = 'default' }: LanguageSelectorProps) {
   const { language, setLanguage, supportedLanguages } = useTranslation();
+  const updateSettings = useUpdateSettings();
+  const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
 
   const currentLanguage = supportedLanguages.find(lang => lang.code === language);
   
-  const handleLanguageChange = (value: string) => {
+  const handleLanguageChange = async (value: string) => {
     console.log('[LanguageSelector] Language changed to:', value);
-    setLanguage(value as LanguageCode);
+    const newLanguage = value as LanguageCode;
+    setLanguage(newLanguage);
+    
+    // Save language to user settings
+    try {
+      await updateSettings.mutateAsync({ language: newLanguage });
+      console.log(`[LanguageSelector] Language preference saved to user settings: ${newLanguage}`);
+      
+      // Invalidate all insight queries to force refetch with new language
+      queryClient.invalidateQueries({ queryKey: ['health-insights'] });
+      queryClient.invalidateQueries({ queryKey: ['document-insights'] });
+      console.log(`[LanguageSelector] Invalidated insight queries to refetch with new language`);
+    } catch (error) {
+      // Silently fail if user is not logged in or settings update fails
+      // Language is still saved to localStorage via setLanguage
+      console.log(`[LanguageSelector] Could not save language to user settings (user may not be logged in)`);
+      
+      // Still invalidate queries even if settings update fails
+      queryClient.invalidateQueries({ queryKey: ['health-insights'] });
+      queryClient.invalidateQueries({ queryKey: ['document-insights'] });
+    }
   };
 
   if (variant === 'compact') {

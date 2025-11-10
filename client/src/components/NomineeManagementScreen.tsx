@@ -1,10 +1,8 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Plus, Edit2, Trash2, UserPlus, AlertCircle, Clock, Calendar, Infinity, Shield, FileText, Phone, User, X, Check } from 'lucide-react';
-
-type Relationship = 'Parent' | 'Sibling' | 'Spouse' | 'Friend' | 'Other';
-type AccessScope = 'emergency-only' | 'emergency-limited';
-type NomineeStatus = 'active' | 'expiring-soon' | 'pending';
+import { useNominees, useCreateNominee, useUpdateNominee, useDeleteNominee } from '@/hooks/useNominees';
+import type { Relationship, AccessScope, NomineeStatus, Nominee as ApiNominee } from '@/lib/api/nominees';
 
 type Nominee = {
   id: string;
@@ -24,28 +22,21 @@ type NomineeManagementScreenProps = {
 };
 
 export const NomineeManagementScreen = ({ onBack }: NomineeManagementScreenProps) => {
-  const [nominees, setNominees] = useState<Nominee[]>([
-    {
-      id: '1',
-      name: 'Rishabh Singh',
-      nameHi: 'ऋषभ सिंह',
-      relationship: 'Sibling',
-      phone: '+91 98765 43210',
-      scope: 'emergency-only',
-      expiry: 'lifetime',
-      status: 'active'
-    },
-    {
-      id: '2',
-      name: 'Priya Sharma',
-      nameHi: 'प्रिया शर्मा',
-      relationship: 'Spouse',
-      phone: '+91 87654 32109',
-      scope: 'emergency-limited',
-      expiry: '2024-12-31',
-      status: 'expiring-soon'
-    }
-  ]);
+  const { data: nomineesData, isLoading } = useNominees();
+  const createNominee = useCreateNominee();
+  const updateNominee = useUpdateNominee();
+  const deleteNominee = useDeleteNominee();
+
+  // Map API nominees to component format
+  const nominees: Nominee[] = nomineesData?.nominees?.map((n: ApiNominee) => ({
+    id: n.id,
+    name: n.name,
+    relationship: n.relationship,
+    phone: n.phone,
+    scope: n.scope,
+    expiry: n.expiry,
+    status: n.status as NomineeStatus,
+  })) || [];
 
   const [addFlowStep, setAddFlowStep] = useState<AddNomineeStep>(null);
   const [editingNominee, setEditingNominee] = useState<string | null>(null);
@@ -56,7 +47,8 @@ export const NomineeManagementScreen = ({ onBack }: NomineeManagementScreenProps
     relationship: 'Friend' as Relationship,
     phone: '',
     scope: 'emergency-only' as AccessScope,
-    expiry: 'lifetime' as string
+    expiry: 'lifetime' as string,
+    customExpiryDate: '' as string
   });
 
   const handleAddNominee = () => {
@@ -64,34 +56,58 @@ export const NomineeManagementScreen = ({ onBack }: NomineeManagementScreenProps
   };
 
   const handleNextStep = () => {
-    if (addFlowStep === 'basic') setAddFlowStep('scope');
-    else if (addFlowStep === 'scope') setAddFlowStep('confirm');
+    if (addFlowStep === 'basic') {
+      // Validate basic info before proceeding
+      if (!newNominee.name || !newNominee.phone) return;
+      setAddFlowStep('scope');
+    } else if (addFlowStep === 'scope') {
+      setAddFlowStep('confirm');
+    }
   };
 
-  const handleConfirmAdd = () => {
-    const nominee: Nominee = {
-      id: Date.now().toString(),
-      name: newNominee.name,
-      relationship: newNominee.relationship,
-      phone: newNominee.phone,
-      scope: newNominee.scope,
-      expiry: newNominee.expiry,
-      status: 'pending'
-    };
-    setNominees([...nominees, nominee]);
-    setAddFlowStep(null);
-    setNewNominee({
-      name: '',
-      relationship: 'Friend',
-      phone: '',
-      scope: 'emergency-only',
-      expiry: 'lifetime'
-    });
+  const handleConfirmAdd = async () => {
+    try {
+      const expiryType = newNominee.expiry === 'lifetime' 
+        ? 'lifetime' 
+        : newNominee.expiry === '24h' 
+        ? '24h'
+        : newNominee.expiry === '7d'
+        ? '7d'
+        : 'custom';
+
+      await createNominee.mutateAsync({
+        name: newNominee.name,
+        relationship: newNominee.relationship,
+        phoneNumber: newNominee.phone,
+        accessScope: newNominee.scope,
+        expiryType: expiryType as any,
+        // Only include customExpiryDate if expiryType is 'custom' and date is provided
+        ...(expiryType === 'custom' && newNominee.customExpiryDate 
+          ? { customExpiryDate: newNominee.customExpiryDate }
+          : {}),
+      });
+
+      setAddFlowStep(null);
+      setNewNominee({
+        name: '',
+        relationship: 'Friend',
+        phone: '',
+        scope: 'emergency-only',
+        expiry: 'lifetime',
+        customExpiryDate: ''
+      });
+    } catch (error) {
+      // Error is handled by the hook's toast
+    }
   };
 
-  const handleRevoke = (id: string) => {
-    setNominees(nominees.filter(n => n.id !== id));
-    setRevokeConfirm(null);
+  const handleRevoke = async (id: string) => {
+    try {
+      await deleteNominee.mutateAsync(id);
+      setRevokeConfirm(null);
+    } catch (error) {
+      // Error is handled by the hook's toast
+    }
   };
 
   const getScopeLabel = (scope: AccessScope) => {
@@ -185,6 +201,13 @@ export const NomineeManagementScreen = ({ onBack }: NomineeManagementScreenProps
             {language === 'en' ? 'हिंदी' : 'English'}
           </button>
         </div>
+
+        {isLoading && (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-500">{language === 'hi' ? 'लोड हो रहा है...' : 'Loading...'}</p>
+          </div>
+        )}
 
         <div className="space-y-4">
           {nominees.map(nominee => (
@@ -480,6 +503,17 @@ export const NomineeManagementScreen = ({ onBack }: NomineeManagementScreenProps
                           <Calendar className="w-5 h-5 mx-auto mb-1" />
                           <span className="text-sm font-medium">{language === 'hi' ? 'कस्टम' : 'Custom'}</span>
                         </button>
+                        {newNominee.expiry === 'custom' && (
+                          <div className="col-span-2 mt-2">
+                            <input
+                              type="date"
+                              value={newNominee.customExpiryDate}
+                              onChange={e => setNewNominee({ ...newNominee, customExpiryDate: e.target.value })}
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              data-testid="input-custom-expiry"
+                            />
+                          </div>
+                        )}
                         <button
                           onClick={() => setNewNominee({ ...newNominee, expiry: 'lifetime' })}
                           className={`p-3 border-2 rounded-lg text-center ${
@@ -556,10 +590,14 @@ export const NomineeManagementScreen = ({ onBack }: NomineeManagementScreenProps
 
                     <button
                       onClick={handleConfirmAdd}
-                      className="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
+                      disabled={createNominee.isPending}
+                      className="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
                       data-testid="button-confirm-add"
                     >
-                      {language === 'hi' ? 'पुष्टि करें और जोड़ें' : 'Confirm & Add'}
+                      {createNominee.isPending 
+                        ? (language === 'hi' ? 'जोड़ा जा रहा है...' : 'Adding...')
+                        : (language === 'hi' ? 'पुष्टि करें और जोड़ें' : 'Confirm & Add')
+                      }
                     </button>
                   </div>
                 )}

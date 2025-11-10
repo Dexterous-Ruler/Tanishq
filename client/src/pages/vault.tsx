@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { VaultDocumentTimeline } from '@/components/VaultDocumentTimeline';
 import { ArogyaVaultAddDocumentWizard } from '@/components/MediLockerAddDocumentWizard';
 import { useLocation } from 'wouter';
-import { useDocuments, useCreateDocument, useDeleteDocument } from '@/hooks/useDocuments';
+import { useDocuments, useCreateDocument, useDeleteDocument, useSyncDocuments } from '@/hooks/useDocuments';
 import type { DocumentType } from '@/lib/api/documents';
 
 type FilterType = DocumentType | 'all';
@@ -21,6 +21,7 @@ export default function VaultPage() {
 
   const createDocumentMutation = useCreateDocument();
   const deleteDocumentMutation = useDeleteDocument();
+  const syncDocumentsMutation = useSyncDocuments();
 
   const handleBack = () => {
     console.log('⬅️ Back to home');
@@ -62,9 +63,15 @@ export default function VaultPage() {
     setShowWizard(true);
   };
 
-  const handleOfflineSyncClick = () => {
+  const handleOfflineSyncClick = async () => {
     console.log('🔄 Offline sync clicked');
-    alert('Starting sync...\n\n(Sync functionality coming soon)');
+    try {
+      await syncDocumentsMutation.mutateAsync();
+      // Documents will be refetched automatically via React Query
+    } catch (error) {
+      // Error is handled by mutation hook
+      console.error('Failed to sync documents:', error);
+    }
   };
 
   const handleDocumentDelete = async (docId: string) => {
@@ -132,13 +139,18 @@ export default function VaultPage() {
     type: doc.type,
     tags: doc.tags || [],
     fileType: doc.fileType || undefined,
+    isOffline: doc.syncStatus === 'pending',
   })) || [];
+
+  // Calculate actual pending count
+  const pendingCount = documentsData?.documents?.filter(doc => doc.syncStatus === 'pending').length || 0;
 
   return (
     <>
       <VaultDocumentTimeline
         documents={documents}
         isLoading={isLoading}
+        offlineCount={pendingCount}
         onBack={handleBack}
         onSearch={handleSearch}
         onFilterChange={handleFilterChange}

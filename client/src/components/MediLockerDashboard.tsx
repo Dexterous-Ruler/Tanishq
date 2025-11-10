@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Plus, Heart, FileText, BarChart3, Bell, Search, Globe, Mic, ChevronRight, Calendar, Pill, MapPin, WifiOff, Home, FolderOpen, Share2, AlertCircle, User } from 'lucide-react';
+import { Plus, Heart, FileText, BarChart3, Bell, Search, Globe, Mic, ChevronRight, Calendar, Pill, MapPin, WifiOff, Home, FolderOpen, Share2, AlertCircle, User, MessageCircle } from 'lucide-react';
 import { useState } from 'react';
 import { LanguageSelector } from '@/i18n/LanguageSelector';
 import { useTranslation } from '@/i18n/useTranslation';
@@ -17,6 +17,15 @@ type ArogyaVaultDashboardProps = {
   }>;
   isLoadingDocuments?: boolean;
   healthInsight?: HealthInsight | null; // Add healthInsight prop
+  nearbyClinics?: Array<{
+    id: string;
+    name: string;
+    address: string;
+    distance: number;
+    latitude?: number;
+    longitude?: number;
+  }>;
+  isLoadingClinics?: boolean;
   onLanguageToggle?: () => void;
   onMicClick?: () => void;
   onNotificationsClick?: () => void;
@@ -28,8 +37,9 @@ type ArogyaVaultDashboardProps = {
   onViewAllDocumentsClick?: () => void;
   onDocumentClick?: (docId: string) => void;
   onViewFullReportClick?: () => void;
-  onDirectionsClick?: (clinic: string) => void;
+  onDirectionsClick?: (clinic: { name: string; latitude?: number; longitude?: number; address?: string }) => void;
   onBottomNavClick?: (tabId: string) => void;
+  onChatbotClick?: () => void;
 };
 
 type DocumentPreview = {
@@ -147,6 +157,8 @@ export const ArogyaVaultDashboard = (props: ArogyaVaultDashboardProps) => {
     recentDocuments: propRecentDocuments,
     isLoadingDocuments = false,
     healthInsight: propHealthInsight, // Use prop instead of hardcoded
+    nearbyClinics = [],
+    isLoadingClinics = false,
     onLanguageToggle,
     onMicClick,
     onNotificationsClick,
@@ -159,7 +171,8 @@ export const ArogyaVaultDashboard = (props: ArogyaVaultDashboardProps) => {
     onDocumentClick,
     onViewFullReportClick,
     onDirectionsClick,
-    onBottomNavClick
+    onBottomNavClick,
+    onChatbotClick
   } = props;
   
   // Use centralized translations
@@ -403,9 +416,22 @@ export const ArogyaVaultDashboard = (props: ArogyaVaultDashboardProps) => {
             transition={{ delay: 0.2 }} 
             className="space-y-4"
           >
-            <div>
-              <h2 className="text-lg font-bold text-gray-900" data-testid="text-ai-insights-title">{t.dashboard.aiHealthInsights}</h2>
-              <p className="text-sm text-gray-500" data-testid="text-ai-insights-subtitle">{t.dashboard.insightsSubtitle}</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900" data-testid="text-ai-insights-title">{t.dashboard.aiHealthInsights}</h2>
+                <p className="text-sm text-gray-500" data-testid="text-ai-insights-subtitle">{t.dashboard.insightsSubtitle}</p>
+              </div>
+              {onChatbotClick && (
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={onChatbotClick}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  aria-label="Open chatbot"
+                  data-testid="button-chatbot"
+                >
+                  <MessageCircle className="w-5 h-5 text-gray-700" />
+                </motion.button>
+              )}
             </div>
 
             {healthInsight ? (
@@ -438,35 +464,65 @@ export const ArogyaVaultDashboard = (props: ArogyaVaultDashboardProps) => {
             className="space-y-4"
           >
             <h2 className="text-lg font-bold text-gray-900" data-testid="text-nearby-clinics-title">{t.dashboard.nearbyClinics}</h2>
-            <div className="space-y-3" data-testid="nearby-clinics-list">
-              {['City Hospital', 'DiagnoLab', 'HealthCare Clinic'].map((clinic, index) => (
-                <motion.div 
-                  key={clinic} 
-                  initial={{ opacity: 0, x: -20 }} 
-                  animate={{ opacity: 1, x: 0 }} 
-                  transition={{ delay: 0.1 * index }} 
-                  className="bg-white rounded-xl border border-gray-200 p-4 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow"
-                  data-testid={`card-clinic-${index}`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                      <MapPin className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900" data-testid={`text-clinic-name-${index}`}>{clinic}</p>
-                      <p className="text-xs text-gray-500" data-testid={`text-clinic-distance-${index}`}>{(index + 1) * 0.5} km away</p>
+            {isLoadingClinics ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="bg-white rounded-xl border border-gray-200 p-4 animate-pulse">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+                      <div className="flex-1">
+                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                        <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                      </div>
                     </div>
                   </div>
-                  <button 
-                    className="text-blue-600 text-xs font-medium hover:underline"
-                    onClick={() => onDirectionsClick?.(clinic)}
-                    data-testid={`button-directions-${index}`}
+                ))}
+              </div>
+            ) : nearbyClinics.length > 0 ? (
+              <div className="space-y-3" data-testid="nearby-clinics-list">
+                {nearbyClinics.map((clinic, index) => (
+                  <motion.div 
+                    key={clinic.id} 
+                    initial={{ opacity: 0, x: -20 }} 
+                    animate={{ opacity: 1, x: 0 }} 
+                    transition={{ delay: 0.1 * index }} 
+                    className="bg-white rounded-xl border border-gray-200 p-4 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow"
+                    data-testid={`card-clinic-${index}`}
                   >
-                    {t.dashboard.directions}
-                  </button>
-                </motion.div>
-              ))}
-            </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        <MapPin className="w-5 h-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900" data-testid={`text-clinic-name-${index}`}>{clinic.name}</p>
+                        <p className="text-xs text-gray-500" data-testid={`text-clinic-distance-${index}`}>
+                          {clinic.distance.toFixed(1)} km away
+                        </p>
+                        {clinic.address && (
+                          <p className="text-xs text-gray-400 mt-0.5">{clinic.address}</p>
+                        )}
+                      </div>
+                    </div>
+                    <button 
+                      className="text-blue-600 text-xs font-medium hover:underline"
+                      onClick={() => onDirectionsClick?.({ 
+                        name: clinic.name, 
+                        latitude: clinic.latitude, 
+                        longitude: clinic.longitude,
+                        address: clinic.address 
+                      })}
+                      data-testid={`button-directions-${index}`}
+                    >
+                      {t.dashboard.directions}
+                    </button>
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
+                <p className="text-sm text-gray-500">No clinics found nearby</p>
+              </div>
+            )}
           </motion.div>
         </div>
       </div>

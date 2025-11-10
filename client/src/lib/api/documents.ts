@@ -168,3 +168,11 @@ export async function getDocumentPreview(
   return res.json();
 }
 
+/**
+ * Sync pending documents (update syncStatus from 'pending' to 'synced')
+ */
+export async function syncDocuments(): Promise<{ success: boolean; message: string; syncedCount: number }> {
+  const res = await apiRequest("POST", "/api/documents/sync", undefined);
+  return res.json();
+}
+

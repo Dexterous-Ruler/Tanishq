@@ -1,0 +1,9 @@
+# Cloudflare Pages redirects file
+# This file should be placed in the dist/public directory after build
+
+# API routes - proxy to backend
+/api/* https://your-backend-url.workers.dev/api/:splat 200
+
+# SPA fallback - serve index.html for all routes
+/* /index.html 200
+

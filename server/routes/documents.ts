@@ -14,6 +14,7 @@ import * as path from "path";
 import multer from "multer";
 import { SupabaseStorageService } from "../services/supabaseStorage";
 import { OpenAIService, type ExtractedMetadata } from "../services/openaiService";
+import { generateDefaultTiming, generateReminders } from "../services/medicationService";
 
 const router = Router();
 
@@ -495,6 +496,101 @@ router.post(
         ocrProcessedAt: ocrProcessedAt || null,
       });
 
+      // Extract medications from document if text is available
+      // Run medication extraction for all document types, but prioritize prescriptions
+      if (extractedText && extractedText.trim().length > 0) {
+        try {
+          // Always attempt medication extraction, but use appropriate document type
+          const documentTypeForExtraction = type === 'prescription' ? 'prescription' : type;
+          
+          console.log(`[Documents] Attempting medication extraction from ${documentTypeForExtraction} document`);
+          const extractedMedications = await OpenAIService.extractMedications(extractedText, documentTypeForExtraction);
+          
+          if (extractedMedications && extractedMedications.length > 0) {
+            console.log(`[Documents] Extracted ${extractedMedications.length} medication(s) from ${documentTypeForExtraction} document`);
+            
+            for (const med of extractedMedications) {
+              try {
+                // Generate timing if not provided
+                let timingArray = med.timing && Array.isArray(med.timing) && med.timing.length > 0
+                  ? med.timing.filter((t: any) => t && typeof t === 'string' && t.includes(':'))
+                  : generateDefaultTiming(med.frequency);
+                
+                // Ensure timingArray is valid and filter out any invalid times
+                timingArray = timingArray.filter((time: string) => {
+                  if (!time || typeof time !== 'string') return false;
+                  const parts = time.split(':');
+                  return parts.length === 2 && !isNaN(Number(parts[0])) && !isNaN(Number(parts[1]));
+                });
+                
+                // If after filtering we have no valid times, use default
+                if (timingArray.length === 0) {
+                  timingArray = generateDefaultTiming(med.frequency);
+                }
+                
+                // Parse end date if duration is provided
+                let endDate: Date | null = null;
+                if (med.duration) {
+                  // Try to parse duration (e.g., "7 days", "until 2024-12-31")
+                  const durationLower = med.duration.toLowerCase();
+                  if (durationLower.includes('day')) {
+                    const daysMatch = med.duration.match(/(\d+)\s*days?/i);
+                    if (daysMatch) {
+                      const days = parseInt(daysMatch[1]);
+                      endDate = new Date();
+                      endDate.setDate(endDate.getDate() + days);
+                    }
+                  } else if (durationLower.includes('until') || durationLower.includes('till')) {
+                    const dateMatch = med.duration.match(/(\d{4}-\d{2}-\d{2})/);
+                    if (dateMatch) {
+                      endDate = new Date(dateMatch[1]);
+                    }
+                  }
+                }
+                
+                // Create medication
+                const medication = await storage.createMedication({
+                  userId: req.userId!,
+                  name: med.name,
+                  dosage: med.dosage,
+                  frequency: med.frequency,
+                  timing: JSON.stringify(timingArray),
+                  startDate: new Date(),
+                  endDate: endDate,
+                  source: 'ai',
+                  sourceDocumentId: document.id,
+                  status: 'active',
+                  instructions: med.instructions || null,
+                });
+                
+                // Generate reminders
+                const reminders = generateReminders(medication);
+                for (const reminder of reminders) {
+                  await storage.createMedicationReminder({
+                    medicationId: medication.id,
+                    scheduledTime: reminder.scheduledTime,
+                    status: 'pending',
+                    sentAt: null,
+                  });
+                }
+                
+                console.log(`[Documents] Created medication ${medication.name} with ${reminders.length} reminders`);
+              } catch (medError: any) {
+                console.error(`[Documents] Failed to create medication ${med.name}:`, medError.message);
+                // Continue with other medications
+              }
+            }
+          } else {
+            console.log(`[Documents] No medications found in ${documentTypeForExtraction} document`);
+          }
+        } catch (medExtractionError: any) {
+          console.error("[Documents] Medication extraction failed:", medExtractionError.message);
+          // Don't fail document creation if medication extraction fails
+        }
+      } else {
+        console.log("[Documents] No extracted text available for medication extraction");
+      }
+
       res.status(201).json({
         success: true,
         message: "Document created successfully",
@@ -817,6 +913,12 @@ router.get("/:id/insights", async (req: Request, res: Response, next: NextFuncti
     const documentId = req.params.id;
     console.log(`[Document Insights] Fetching insights for document ${documentId}`);
 
+    // Get user to retrieve language preference
+    const user = await storage.getUser(userId);
+    const userSettings = user?.settings ? JSON.parse(user.settings) : {};
+    const userLanguage = userSettings.language || 'en';
+    console.log(`[Document Insights] User language preference: ${userLanguage} (settings: ${JSON.stringify(userSettings)})`);
+
     // Get document
     const document = await storage.getDocument(documentId);
     
@@ -837,17 +939,21 @@ router.get("/:id/insights", async (req: Request, res: Response, next: NextFuncti
 
     // Check if document has extracted text
     if (!document.extractedText || document.extractedText.trim().length === 0) {
+      const isHindi = userLanguage === 'hi';
       return res.json({
         success: true,
         insight: {
           status: "none",
-          summary: "No text extracted from document. Unable to generate insights.",
+          summary: isHindi 
+            ? "दस्तावेज़ से कोई पाठ निकाला नहीं जा सका। अंतर्दृष्टि उत्पन्न करने में असमर्थ।"
+            : "No text extracted from document. Unable to generate insights.",
           hasFullAnalysis: false,
         },
       });
     }
 
     // Check if cached insight exists and is recent (less than 7 days old)
+    // Also check if the cached insight was generated in the same language
     if (document.aiInsight && document.aiInsightGeneratedAt) {
       const insightAge = Date.now() - new Date(document.aiInsightGeneratedAt).getTime();
       const sevenDaysInMs = 7 * 24 * 60 * 60 * 1000;
@@ -855,31 +961,49 @@ router.get("/:id/insights", async (req: Request, res: Response, next: NextFuncti
       if (insightAge < sevenDaysInMs) {
         try {
           const cachedInsight = JSON.parse(document.aiInsight);
-          console.log(`[Document Insights] Returning cached insight for document ${documentId}`);
-          return res.json({
-            success: true,
-            insight: cachedInsight,
-            cached: true,
-          });
+          
+          // Check if cached insight has language metadata and if it matches current language
+          // If no language metadata exists, assume it's in English (old cached insights)
+          const cachedLanguage = cachedInsight.language || 'en';
+          
+          if (cachedLanguage === userLanguage) {
+            console.log(`[Document Insights] Returning cached insight for document ${documentId} (language: ${userLanguage})`);
+            // Remove language metadata before returning (it's just for cache validation)
+            const { language: _, ...insightWithoutLanguage } = cachedInsight;
+            return res.json({
+              success: true,
+              insight: insightWithoutLanguage,
+              cached: true,
+            });
+          } else {
+            console.log(`[Document Insights] Cached insight language (${cachedLanguage}) doesn't match user language (${userLanguage}), regenerating`);
+          }
         } catch (parseError) {
           console.warn(`[Document Insights] Failed to parse cached insight, regenerating`);
         }
+      } else {
+        console.log(`[Document Insights] Cached insight is older than 7 days, regenerating`);
       }
     }
 
-    // Generate document insight using OpenAI
+    // Generate document insight using OpenAI with user's language preference
     const insight = await OpenAIService.generateDocumentInsight(
       document.extractedText,
-      document.type
+      document.type,
+      userLanguage
     );
 
-    // Cache the insight in the database
+    // Cache the insight in the database with language metadata
     try {
+      const insightWithLanguage = {
+        ...insight,
+        language: userLanguage, // Store language for cache validation
+      };
       await storage.updateDocument(documentId, {
-        aiInsight: JSON.stringify(insight),
+        aiInsight: JSON.stringify(insightWithLanguage),
         aiInsightGeneratedAt: new Date(),
       });
-      console.log(`[Document Insights] Cached insight for document ${documentId}`);
+      console.log(`[Document Insights] Cached insight for document ${documentId} (language: ${userLanguage})`);
     } catch (cacheError) {
       console.error(`[Document Insights] Failed to cache insight:`, cacheError);
       // Continue even if caching fails
@@ -887,7 +1011,7 @@ router.get("/:id/insights", async (req: Request, res: Response, next: NextFuncti
 
     res.json({
       success: true,
-      insight,
+      insight, // Return insight without language metadata (it's only stored in cache)
       cached: false,
     });
   } catch (error: any) {
@@ -945,6 +1069,49 @@ router.get("/:id/preview", async (req: Request, res: Response, next: NextFunctio
       success: true,
       previewUrl: document.fileUrl,
       fileType: document.fileType,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * POST /api/documents/sync
+ * Sync all pending documents (update syncStatus from 'pending' to 'synced')
+ */
+router.post("/sync", requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.userId!;
+    
+    // Get all documents for the user
+    const documents = await storage.getDocumentsByUserId(userId);
+    
+    // Filter pending documents
+    const pendingDocuments = documents.filter(doc => doc.syncStatus === "pending");
+    
+    if (pendingDocuments.length === 0) {
+      return res.json({
+        success: true,
+        message: "No pending documents to sync",
+        syncedCount: 0,
+      });
+    }
+    
+    // Update each pending document to synced
+    let syncedCount = 0;
+    for (const doc of pendingDocuments) {
+      try {
+        await storage.updateDocument(doc.id, { syncStatus: "synced" });
+        syncedCount++;
+      } catch (error) {
+        console.error(`[Documents] Failed to sync document ${doc.id}:`, error);
+      }
+    }
+    
+    res.json({
+      success: true,
+      message: `Synced ${syncedCount} document(s)`,
+      syncedCount,
     });
   } catch (error) {
     next(error);

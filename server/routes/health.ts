@@ -29,15 +29,25 @@ router.get("/insights", async (req: Request, res: Response, next: NextFunction) 
 
     console.log(`[Health Insights] Fetching health summary for user ${userId}`);
 
+    // Get user to retrieve language preference
+    const user = await storage.getUser(userId);
+    const userSettings = user?.settings ? JSON.parse(user.settings) : {};
+    const userLanguage = userSettings.language || 'en';
+    console.log(`[Health Insights] User language preference: ${userLanguage} (settings: ${JSON.stringify(userSettings)})`);
+
     // Get all user documents
     const documents = await storage.getDocumentsByUserId(userId);
+    
+    const isHindi = userLanguage === 'hi';
     
     if (!documents || documents.length === 0) {
       return res.json({
         success: true,
         insight: {
           status: "good",
-          message: "No documents available. Upload lab reports to get started with AI health insights.",
+          message: isHindi
+            ? "कोई दस्तावेज़ उपलब्ध नहीं है। AI स्वास्थ्य अंतर्दृष्टि शुरू करने के लिए लैब रिपोर्ट अपलोड करें।"
+            : "No documents available. Upload lab reports to get started with AI health insights.",
         },
       });
     }
@@ -57,13 +67,15 @@ router.get("/insights", async (req: Request, res: Response, next: NextFunction) 
         success: true,
         insight: {
           status: "good",
-          message: "Documents uploaded but no text extracted yet. Please wait for processing to complete.",
+          message: isHindi
+            ? "दस्तावेज़ अपलोड किए गए हैं लेकिन अभी तक कोई पाठ निकाला नहीं गया है। कृपया प्रसंस्करण पूरा होने की प्रतीक्षा करें।"
+            : "Documents uploaded but no text extracted yet. Please wait for processing to complete.",
         },
       });
     }
 
-    // Generate health summary using OpenAI
-    const summary = await OpenAIService.generateHealthSummary(documentsWithText);
+    // Generate health summary using OpenAI with user's language preference
+    const summary = await OpenAIService.generateHealthSummary(documentsWithText, userLanguage);
 
     res.json({
       success: true,

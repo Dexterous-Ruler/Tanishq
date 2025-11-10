@@ -10,18 +10,23 @@ import * as path from "path";
 const supabaseUrl = process.env.SUPABASE_URL || "";
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || "";
 
-if (!supabaseUrl || !supabaseServiceKey) {
-  console.warn("[Supabase Storage] Warning: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not set");
+const isSupabaseConfigured = supabaseUrl && supabaseServiceKey;
+
+if (!isSupabaseConfigured) {
+  console.warn("[Supabase Storage] Warning: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not set - Supabase Storage will be disabled");
 }
 
+// Only create Supabase client if configured
 // Use service role key for server-side operations (bypasses RLS)
 // This is safe because we enforce access control in our application code
-const supabaseStorage: SupabaseClient = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false,
-  },
-});
+const supabaseStorage: SupabaseClient | null = isSupabaseConfigured
+  ? createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    })
+  : null;
 
 const DOCUMENTS_BUCKET = "documents";
 
@@ -30,6 +35,11 @@ export class SupabaseStorageService {
    * Ensure the documents bucket exists
    */
   static async ensureBucket(): Promise<void> {
+    if (!supabaseStorage) {
+      console.warn("[Supabase Storage] Supabase not configured, skipping bucket initialization");
+      return;
+    }
+    
     try {
       // Check if bucket exists
       const { data: buckets, error: listError } = await supabaseStorage.storage.listBuckets();
@@ -87,6 +97,10 @@ export class SupabaseStorageService {
     fileName: string,
     mimeType: string
   ): Promise<string> {
+    if (!supabaseStorage) {
+      throw new Error("Supabase Storage is not configured. Please set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables.");
+    }
+    
     try {
       // Ensure bucket exists
       await this.ensureBucket();
@@ -132,6 +146,10 @@ export class SupabaseStorageService {
    * @returns Signed URL that can be used to access the file
    */
   static async createSignedUrl(filePath: string, expiresIn: number = 3600): Promise<string> {
+    if (!supabaseStorage) {
+      throw new Error("Supabase Storage is not configured. Please set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables.");
+    }
+    
     try {
       // Extract the path after "documents/" if needed
       const pathInBucket = filePath.startsWith('documents/') 
@@ -159,6 +177,11 @@ export class SupabaseStorageService {
    * @param filePath - Path to the file in storage (e.g., "documents/userId/filename.pdf")
    */
   static async deleteFile(filePath: string): Promise<void> {
+    if (!supabaseStorage) {
+      console.warn("[Supabase Storage] Supabase not configured, skipping file deletion");
+      return;
+    }
+    
     try {
       // Extract the path after "documents/" if needed
       const pathInBucket = filePath.startsWith('documents/') 
@@ -193,8 +216,10 @@ export class SupabaseStorageService {
   }
 }
 
-// Initialize bucket on module load
-SupabaseStorageService.ensureBucket().catch((error) => {
-  console.error("[Supabase Storage] Failed to initialize bucket:", error);
-});
+// Initialize bucket on module load (only if Supabase is configured)
+if (supabaseStorage) {
+  SupabaseStorageService.ensureBucket().catch((error) => {
+    console.error("[Supabase Storage] Failed to initialize bucket:", error);
+  });
+}
 

@@ -2,8 +2,28 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
-    const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
+    const contentType = res.headers.get("content-type");
+    let errorMessage = res.statusText;
+    
+    try {
+      if (contentType && contentType.includes("application/json")) {
+        const json = await res.json();
+        errorMessage = json.message || json.error || JSON.stringify(json);
+      } else {
+        const text = await res.text();
+        // If it's HTML, provide a more helpful error message
+        if (text.includes("<!DOCTYPE") || text.includes("<html")) {
+          errorMessage = `Server returned HTML instead of JSON. This usually means the route doesn't exist (${res.status}) or there's a server error.`;
+        } else {
+          errorMessage = text || res.statusText;
+        }
+      }
+    } catch (e) {
+      // If we can't parse the response, use status text
+      errorMessage = res.statusText;
+    }
+    
+    throw new Error(`${res.status}: ${errorMessage}`);
   }
 }
 

@@ -1,8 +1,11 @@
 import { useLocation } from 'wouter';
+import { useEffect } from 'react';
 import { ProfileSettingsScreen } from '@/components/ProfileSettingsScreen';
 import { useAuthStatus } from '@/hooks/useAuth';
 import { useUserProfile, useUpdateSettings } from '@/hooks/useUser';
 import { useLogout } from '@/hooks/useAuth';
+import { useTranslation } from '@/i18n/useTranslation';
+import i18n from '@/i18n/i18n';
 
 /**
  * Mask phone number (e.g., "78499xxxx6" or "+91 78499xxxx6")
@@ -55,6 +58,23 @@ export default function ProfilePage() {
   const { data: userProfile, isLoading: profileLoading, error: profileError } = useUserProfile();
   const logoutMutation = useLogout();
   const updateSettingsMutation = useUpdateSettings();
+  const { setLanguage } = useTranslation();
+
+  // Initialize language from user settings when profile is loaded
+  useEffect(() => {
+    if (userProfile?.user?.settings?.language) {
+      const userLanguage = userProfile.user.settings.language;
+      const currentLanguage = i18n.language || 'en';
+      
+      // Only update if different from current language
+      if (userLanguage !== currentLanguage && (userLanguage === 'en' || userLanguage === 'hi')) {
+        console.log(`[Profile] Initializing language from user settings: ${userLanguage}`);
+        setLanguage(userLanguage);
+        i18n.changeLanguage(userLanguage);
+        localStorage.setItem('arogya_vault_language', userLanguage);
+      }
+    }
+  }, [userProfile?.user?.settings?.language, setLanguage]);
 
   // Check authentication - API returns { authenticated: boolean, ... }
   // If authStatus is undefined/null, treat as not authenticated
@@ -101,23 +121,19 @@ export default function ProfilePage() {
   };
 
   const handleFaq = () => {
-    console.log('FAQ clicked');
-    alert('FAQ feature coming soon!');
+    setLocation('/legal/faq');
   };
 
   const handleSupport = () => {
-    console.log('Support clicked');
-    alert('Contact support feature coming soon!');
+    setLocation('/legal-support');
   };
 
   const handleTerms = () => {
-    console.log('Terms clicked');
-    alert('Terms & Conditions feature coming soon!');
+    setLocation('/legal/terms');
   };
 
   const handlePrivacy = () => {
-    console.log('Privacy clicked');
-    alert('Privacy Policy feature coming soon!');
+    setLocation('/legal/privacy');
   };
 
   const handleLogout = () => {
