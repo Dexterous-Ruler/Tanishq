@@ -6,9 +6,9 @@ Your app is deployed and running! Now you need to add environment variables to e
 
 Your app is running on Railway, but these features need configuration:
 
-- ⚠️ Supabase Storage (database) - **REQUIRED**
+- ✅ Supabase Storage (database) - **REQUIRED**
+- ✅ Session Storage (PostgreSQL) - **REQUIRED** (Fixed with DATABASE_URL)
 - ⚠️ Email Service (SMTP) - **Recommended**
-- ⚠️ Session Storage (MemoryStore warning) - **Will be fixed with Supabase**
 - ℹ️ Push Notifications (VAPID) - Optional
 - ℹ️ OpenAI API - Optional
 
@@ -54,9 +54,23 @@ SUPABASE_ANON_KEY
 - Copy **anon public** key
 
 ```
+DATABASE_URL
+```
+**Value:** Your Supabase PostgreSQL connection string
+- Go to Supabase Dashboard → Settings → Database
+- Scroll down to **Connection string**
+- Select **URI** tab
+- Copy the connection string
+- **Format:** `postgresql://postgres.[project-ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres`
+- ⚠️ **Important**: Use the **Transaction Pooler** connection string for better performance
+- ⚠️ This is sensitive - contains database password!
+
+```
 USE_DATABASE
 ```
 **Value:** `true`
+- Must be exactly `true` (as a string)
+- This enables database storage for sessions and data
 
 #### B. Session Configuration (REQUIRED)
 

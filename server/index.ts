@@ -3,12 +3,15 @@ import "dotenv/config";
 
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
+import connectPgSimple from "connect-pg-simple";
+import pg from "pg";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { config } from "./config";
 import { reminderScheduler } from "./services/reminderScheduler";
 import * as path from "path";
 
+const { Pool } = pg;
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -16,9 +19,8 @@ app.use(express.urlencoded({ extended: false }));
 // Serve uploaded files
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
-// Session middleware
+// Session middleware with PostgreSQL store
 // Railway uses a proxy, so we need to trust the proxy for secure cookies
-// Check if we're behind a proxy (Railway sets this)
 const isProduction = process.env.NODE_ENV === "production";
 const trustProxy = process.env.TRUST_PROXY !== "false"; // Default to true in production
 
@@ -26,8 +28,67 @@ if (trustProxy) {
   app.set("trust proxy", 1); // Trust first proxy (Railway's load balancer)
 }
 
+// Configure PostgreSQL session store
+let sessionStore: session.Store;
+
+// Get Supabase PostgreSQL connection string
+// Priority: DATABASE_URL > SUPABASE_DATABASE_URL
+const databaseUrl = process.env.DATABASE_URL || process.env.SUPABASE_DATABASE_URL;
+const useDatabase = process.env.USE_DATABASE === "true";
+
+if (databaseUrl && useDatabase) {
+  try {
+    // Use PostgreSQL session store (Supabase)
+    const PgSession = connectPgSimple(session);
+    const pool = new Pool({
+      connectionString: databaseUrl,
+      ssl: isProduction ? { rejectUnauthorized: false } : false,
+      // Connection pool settings for better performance
+      max: 20, // Maximum number of clients in the pool
+      idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
+      connectionTimeoutMillis: 10000, // Return an error after 10 seconds if connection could not be established
+    });
+
+    sessionStore = new PgSession({
+      pool: pool,
+      tableName: "session", // Table name for sessions (connect-pg-simple will create it)
+      createTableIfMissing: true, // Automatically create table if it doesn't exist
+      // Clean up expired sessions every hour
+      pruneSessionInterval: 60 * 60, // 1 hour in seconds
+    });
+
+    log("✅ Using PostgreSQL session store (Supabase) - Sessions will persist across restarts");
+    
+    // Test the connection
+    pool.query("SELECT NOW()", (err) => {
+      if (err) {
+        log(`⚠️  PostgreSQL connection test failed: ${err.message}`);
+        log("⚠️  Sessions may not persist correctly");
+      } else {
+        log("✅ PostgreSQL session store connection verified");
+      }
+    });
+  } catch (error: any) {
+    log(`❌ Failed to initialize PostgreSQL session store: ${error.message}`);
+    log("⚠️  Falling back to MemoryStore (sessions will not persist)");
+    log("⚠️  Check DATABASE_URL and USE_DATABASE environment variables");
+    sessionStore = new session.MemoryStore();
+  }
+} else {
+  // Fallback to MemoryStore if database not configured
+  if (!databaseUrl) {
+    log("⚠️  WARNING: DATABASE_URL not set - Using MemoryStore for sessions (not persistent)");
+    log("⚠️  Set DATABASE_URL (Supabase PostgreSQL connection string) to use persistent sessions");
+  } else if (!useDatabase) {
+    log("⚠️  WARNING: USE_DATABASE is not 'true' - Using MemoryStore for sessions (not persistent)");
+    log("⚠️  Set USE_DATABASE=true to use persistent sessions");
+  }
+  sessionStore = new session.MemoryStore();
+}
+
 app.use(
   session({
+    store: sessionStore,
     secret: config.session.secret,
     resave: false,
     saveUninitialized: false,
