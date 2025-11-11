@@ -131,11 +131,12 @@ export default function VaultPage() {
       day: 'numeric',
       month: 'short',
       year: 'numeric'
-    }) : new Date(doc.createdAt).toLocaleDateString('en-GB', {
+    }) : undefined, // Report date - only if available
+    uploadDate: new Date(doc.createdAt).toLocaleDateString('en-GB', {
       day: 'numeric',
       month: 'short',
       year: 'numeric'
-    }),
+    }), // Upload date - always available
     type: doc.type,
     tags: doc.tags || [],
     fileType: doc.fileType || undefined,

@@ -93,7 +93,11 @@
     "camera": "Camera",
     "fileUpload": "File Upload",
     "scanQR": "Scan QR",
-    "dicomImport": "DICOM Import"
+    "dicomImport": "DICOM Import",
+    "reportDate": "Report Date",
+    "uploadedOn": "Uploaded on",
+    "showReportDate": "Show Report Date",
+    "showUploadDate": "Show Upload Date"
   },
   "document": {
     "addNew": "Add a New Document",

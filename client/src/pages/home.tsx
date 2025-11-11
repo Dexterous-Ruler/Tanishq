@@ -112,8 +112,16 @@ export default function HomePage() {
       type: doc.type === 'lab' ? 'Lab Report' : 
             doc.type === 'prescription' ? 'Prescription' :
             doc.type === 'imaging' ? 'X-Ray' : 'Document',
-      date: doc.date ? new Date(doc.date).toISOString().split('T')[0] : 
-            new Date(doc.createdAt).toISOString().split('T')[0],
+      date: doc.date ? new Date(doc.date).toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric'
+      }) : undefined, // Report date
+      uploadDate: new Date(doc.createdAt).toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric'
+      }), // Upload date
       thumbnail: previewUrl || '/api/placeholder/80/100' // Use preview URL or placeholder
     };
   }) || [];

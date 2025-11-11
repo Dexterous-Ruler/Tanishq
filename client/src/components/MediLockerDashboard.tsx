@@ -12,7 +12,8 @@ type ArogyaVaultDashboardProps = {
   recentDocuments?: Array<{
     id: string;
     type: string;
-    date: string;
+    date?: string; // Report date
+    uploadDate?: string; // Upload date
     thumbnail?: string;
   }>;
   isLoadingDocuments?: boolean;

@@ -93,7 +93,11 @@
     "camera": "कैमरा",
     "fileUpload": "फ़ाइल अपलोड",
     "scanQR": "QR स्कैन करें",
-    "dicomImport": "DICOM आयात"
+    "dicomImport": "DICOM आयात",
+    "reportDate": "रिपोर्ट की तारीख",
+    "uploadedOn": "अपलोड की तारीख",
+    "showReportDate": "रिपोर्ट की तारीख दिखाएं",
+    "showUploadDate": "अपलोड की तारीख दिखाएं"
   },
   "document": {
     "addNew": "नया दस्तावेज़ जोड़ें",

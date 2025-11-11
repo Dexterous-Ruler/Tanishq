@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Search, Plus, FileText, Pill, FlaskConical, Image as ImageIcon, FileCheck, Tag, Upload, QrCode, Scan, WifiOff, ChevronRight, Trash2 } from 'lucide-react';
+import { ArrowLeft, Search, Plus, FileText, Pill, FlaskConical, Image as ImageIcon, FileCheck, Tag, Upload, QrCode, Scan, WifiOff, ChevronRight, Trash2, Calendar } from 'lucide-react';
 import { getDocumentPreview } from '@/lib/api/documents';
 import { useTranslation } from '@/i18n/useTranslation';
 
@@ -10,7 +10,8 @@ type Document = {
   id: string;
   title: string;
   provider?: string;
-  date: string;
+  date?: string; // Report date (optional)
+  uploadDate?: string; // Upload/created date (optional)
   type: DocumentType;
   tags: string[];
   thumbnail?: string;
@@ -269,29 +270,31 @@ export const VaultDocumentTimeline = ({
           )}
         </AnimatePresence>
 
-        <div className="overflow-x-auto scrollbar-hide px-6 md:px-8 lg:px-10 pb-4 md:pb-5 lg:pb-6" data-testid="filter-container">
-          <div className="flex gap-2 md:gap-3 min-w-max">
-            {filterOptions.map(option => (
-              <button 
-                key={option.id} 
-                onClick={() => handleFilterChange(option.id)} 
-                className={`flex items-center gap-2 md:gap-3 px-4 md:px-5 lg:px-6 py-2 md:py-2.5 lg:py-3 rounded-full whitespace-nowrap transition-all ${
-                  activeFilter === option.id 
-                    ? 'bg-blue-600 text-white shadow-md' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-                data-testid={`button-filter-${option.id}`}
-              >
-                <span className="w-4 h-4 md:w-5 md:h-5 lg:w-6 lg:h-6">{option.icon}</span>
-                <span className="text-sm md:text-base lg:text-lg font-medium">
-                  {option.id === 'all' ? t.vault.all : 
-                   option.id === 'prescription' ? t.vault.prescriptions : 
-                   option.id === 'lab' ? t.vault.labReports : 
-                   option.id === 'imaging' ? t.vault.imaging : 
-                   t.vault.billing}
-                </span>
-              </button>
-            ))}
+        <div className="px-6 md:px-8 lg:px-10 pb-4 md:pb-5 lg:pb-6 space-y-3">
+          <div className="overflow-x-auto scrollbar-hide" data-testid="filter-container">
+            <div className="flex gap-2 md:gap-3 min-w-max">
+              {filterOptions.map(option => (
+                <button 
+                  key={option.id} 
+                  onClick={() => handleFilterChange(option.id)} 
+                  className={`flex items-center gap-2 md:gap-3 px-4 md:px-5 lg:px-6 py-2 md:py-2.5 lg:py-3 rounded-full whitespace-nowrap transition-all ${
+                    activeFilter === option.id 
+                      ? 'bg-blue-600 text-white shadow-md' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                  data-testid={`button-filter-${option.id}`}
+                >
+                  <span className="w-4 h-4 md:w-5 md:h-5 lg:w-6 lg:h-6">{option.icon}</span>
+                  <span className="text-sm md:text-base lg:text-lg font-medium">
+                    {option.id === 'all' ? t.vault.all : 
+                     option.id === 'prescription' ? t.vault.prescriptions : 
+                     option.id === 'lab' ? t.vault.labReports : 
+                     option.id === 'imaging' ? t.vault.imaging : 
+                     t.vault.billing}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -358,7 +361,28 @@ export const VaultDocumentTimeline = ({
                         </h3>
                         <ChevronRight className="w-5 h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 text-gray-400 flex-shrink-0" />
                       </div>
-                      <p className="text-sm md:text-base lg:text-lg text-gray-600 mb-2 md:mb-3" data-testid={`text-document-date-${doc.id}`}>{doc.date}</p>
+                      <div className="mb-2 md:mb-3 space-y-1.5">
+                        {/* Show report date if available (primary) */}
+                        {doc.date ? (
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-3 h-3 md:w-4 md:h-4 text-gray-400 flex-shrink-0" />
+                            <p className="text-sm md:text-base lg:text-lg text-gray-600" data-testid={`text-document-report-date-${doc.id}`}>
+                              <span className="text-gray-500 text-xs md:text-sm font-medium">{t.vault.reportDate}: </span>
+                              {doc.date}
+                            </p>
+                          </div>
+                        ) : null}
+                        {/* Show upload date (always show if available, as secondary info) */}
+                        {doc.uploadDate && (
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-3 h-3 md:w-4 md:h-4 text-gray-400 flex-shrink-0" />
+                            <p className={`${doc.date ? 'text-xs md:text-sm text-gray-500' : 'text-sm md:text-base lg:text-lg text-gray-600'}`} data-testid={`text-document-upload-date-${doc.id}`}>
+                              <span className={`${doc.date ? 'text-gray-400' : 'text-gray-500'} text-xs font-medium`}>{t.vault.uploadedOn}: </span>
+                              {doc.uploadDate}
+                            </p>
+                          </div>
+                        )}
+                      </div>
                       <div className="flex flex-wrap gap-1.5 md:gap-2">
                         {doc.tags.map((tag, idx) => (
                           <span 
