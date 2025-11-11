@@ -26,7 +26,23 @@ const trustProxy = process.env.TRUST_PROXY !== "false"; // Default to true in pr
 
 if (trustProxy) {
   app.set("trust proxy", 1); // Trust first proxy (Railway's load balancer)
+  // Railway passes X-Forwarded-Proto header, so we can detect HTTPS correctly
 }
+
+// Middleware to debug protocol detection (for Railway)
+app.use((req, res, next) => {
+  // Log protocol detection for auth endpoints in production
+  if (isProduction && req.path.includes("/auth")) {
+    const forwardedProto = req.get('X-Forwarded-Proto');
+    const isSecure = req.secure || forwardedProto === 'https';
+    console.log(`[Protocol Debug] Path: ${req.path}`);
+    console.log(`[Protocol Debug] req.protocol: ${req.protocol}`);
+    console.log(`[Protocol Debug] req.secure: ${req.secure}`);
+    console.log(`[Protocol Debug] X-Forwarded-Proto: ${forwardedProto || 'not set'}`);
+    console.log(`[Protocol Debug] Determined secure: ${isSecure}`);
+  }
+  next();
+});
 
 // Configure PostgreSQL session store
 let sessionStore: session.Store;
@@ -94,8 +110,8 @@ app.use(
     saveUninitialized: false,
     name: config.session.cookieName,
     cookie: {
-      // In production with Railway, secure should be true because Railway provides HTTPS
-      // We trust the proxy (set above) so Railway's load balancer can forward the request correctly
+      // Railway always uses HTTPS, so secure should be true in production
+      // With trust proxy set, Express will correctly detect HTTPS from X-Forwarded-Proto
       secure: isProduction, // true in production (HTTPS), false in development (HTTP)
       httpOnly: true,
       maxAge: config.session.maxAge,
@@ -141,9 +157,18 @@ app.use((req, res, next) => {
         log(`[Cookie Debug] ${path} - Set-Cookie: ${setCookieHeader ? 'present' : 'missing'}`);
         if (setCookieHeader) {
           const cookieValue = Array.isArray(setCookieHeader) ? setCookieHeader[0] : String(setCookieHeader);
-          log(`[Cookie Debug] ${path} - Cookie: ${cookieValue.substring(0, 100)}...`);
+          log(`[Cookie Debug] ${path} - Cookie: ${cookieValue.substring(0, 150)}...`);
+          // Check if cookie has Secure flag
+          const hasSecure = cookieValue.includes('Secure');
+          const hasHttpOnly = cookieValue.includes('HttpOnly');
+          const hasSameSite = cookieValue.includes('SameSite');
+          log(`[Cookie Debug] ${path} - Cookie flags: Secure=${hasSecure}, HttpOnly=${hasHttpOnly}, SameSite=${hasSameSite}`);
+        } else {
+          log(`[Cookie Debug] ${path} - ⚠️  NO SET-COOKIE HEADER - Cookie not being set!`);
         }
         log(`[Cookie Debug] ${path} - Request cookies: ${req.headers.cookie || 'none'}`);
+        log(`[Cookie Debug] ${path} - Request protocol: ${req.protocol}, secure: ${req.secure}`);
+        log(`[Cookie Debug] ${path} - X-Forwarded-Proto: ${req.get('X-Forwarded-Proto') || 'not set'}`);
       }
     }
   });

@@ -58,14 +58,32 @@ export function useVerifyOTP() {
           description: "OTP verified successfully",
         });
 
-        // Fetch user profile to check onboarding status
-        const authStatus = await getAuthStatus();
+        // Wait a small delay to ensure cookie is processed by browser
+        // This helps with cookie synchronization, especially in production
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Fetch user profile to check onboarding status with retry logic
+        let authStatus = await getAuthStatus();
+        
+        // If not authenticated, retry once after another small delay
+        // This handles race conditions where cookie hasn't been set yet
+        if (!authStatus.authenticated) {
+          console.log("[Auth] First auth status check failed, retrying...");
+          await new Promise(resolve => setTimeout(resolve, 200));
+          authStatus = await getAuthStatus();
+        }
+
         if (authStatus.authenticated && authStatus.user?.onboardingCompleted) {
           // User has completed onboarding, go to home
           setLocation("/home");
-        } else {
+        } else if (authStatus.authenticated) {
           // User hasn't completed onboarding, go to onboarding
           setLocation("/onboarding");
+        } else {
+          // Still not authenticated - this shouldn't happen, but log it
+          console.error("[Auth] User not authenticated after OTP verification");
+          // Redirect to auth page as fallback
+          setLocation("/auth");
         }
       }
     },
@@ -200,14 +218,29 @@ export function useVerifyEmailOTP() {
           description: "Email verified successfully",
         });
 
-        // Fetch user profile to check onboarding status
-        const authStatus = await getAuthStatus();
+        // Wait a small delay to ensure cookie is processed by browser
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Fetch user profile to check onboarding status with retry logic
+        let authStatus = await getAuthStatus();
+        
+        // If not authenticated, retry once after another small delay
+        if (!authStatus.authenticated) {
+          console.log("[Auth] First auth status check failed, retrying...");
+          await new Promise(resolve => setTimeout(resolve, 200));
+          authStatus = await getAuthStatus();
+        }
+
         if (authStatus.authenticated && authStatus.user?.onboardingCompleted) {
           // User has completed onboarding, go to home
           setLocation("/home");
-        } else {
+        } else if (authStatus.authenticated) {
           // User hasn't completed onboarding, go to onboarding
           setLocation("/onboarding");
+        } else {
+          // Still not authenticated - redirect to auth page as fallback
+          console.error("[Auth] User not authenticated after email verification");
+          setLocation("/auth");
         }
       }
     },

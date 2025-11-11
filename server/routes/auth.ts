@@ -171,18 +171,8 @@ router.post(
         cookieName: config.session.cookieName
       });
 
-      // CRITICAL: Wait for session to be fully saved before sending response
-      // This ensures the cookie is set in the response
-      await new Promise<void>((resolve) => {
-        req.session.save((err) => {
-          if (err) {
-            console.error(`[Auth] ❌ Session save error before response:`, err);
-          } else {
-            console.log(`[Auth] ✅ Session saved before sending response`);
-          }
-          resolve();
-        });
-      });
+      // Note: Session is already saved in createUserSession, no need to save again
+      // Express-session will automatically set the cookie when response is sent
 
       // Log response headers to verify cookie will be set
       res.on('finish', () => {
@@ -277,15 +267,30 @@ router.post(
 router.get("/status", async (req: Request, res: Response, next: NextFunction) => {
   try {
     // Debug logging
-    console.log(`[Auth Status] Checking auth status...`);
+    console.log(`[Auth Status] ========== AUTH STATUS CHECK ==========`);
     console.log(`[Auth Status] Session ID: ${req.sessionID}`);
     console.log(`[Auth Status] Session token: ${req.session.token ? `${req.session.token.substring(0, 8)}...` : 'missing'}`);
     console.log(`[Auth Status] Session userId: ${req.session.userId || 'missing'}`);
     console.log(`[Auth Status] Cookies received:`, req.headers.cookie ? 'yes' : 'no');
+    if (req.headers.cookie) {
+      console.log(`[Auth Status] Cookie header: ${req.headers.cookie.substring(0, 100)}...`);
+    }
+    console.log(`[Auth Status] Request protocol: ${req.protocol}`);
+    console.log(`[Auth Status] Request secure: ${req.secure}`);
+    console.log(`[Auth Status] X-Forwarded-Proto: ${req.get('X-Forwarded-Proto') || 'not set'}`);
     
     const token = req.session.token;
     if (!token) {
-      console.log(`[Auth Status] No session token found`);
+      console.log(`[Auth Status] ❌ No session token found in req.session`);
+      console.log(`[Auth Status] This means the cookie wasn't sent or session wasn't loaded from store`);
+      
+      // Check if session store has the session by session ID
+      if (req.sessionID) {
+        console.log(`[Auth Status] Attempting to manually load session with ID: ${req.sessionID}`);
+        // The session store should have loaded it, but let's check what's in req.session
+        console.log(`[Auth Status] req.session contents:`, JSON.stringify(req.session));
+      }
+      
       return res.json({
         authenticated: false,
         message: "Not authenticated",
@@ -541,8 +546,11 @@ router.post(
         auth: { persistSession: false },
       });
 
+      // Note: Supabase auth.resend doesn't support "email" type directly
+      // We'll use our own OTP service instead for email OTP
+      // This is a placeholder - email OTP should use our custom OTP service
       const { data, error } = await supabase.auth.resend({
-        type: "email",
+        type: "signup", // Use signup type as fallback (Supabase limitation)
         email,
       });
 
