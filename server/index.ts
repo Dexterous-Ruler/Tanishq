@@ -58,6 +58,17 @@ app.use((req, res, next) => {
       }
 
       log(logLine);
+      
+      // Log cookie information for auth endpoints
+      if (path.includes("/auth")) {
+        const setCookieHeader = res.getHeader('Set-Cookie');
+        log(`[Cookie Debug] ${path} - Set-Cookie: ${setCookieHeader ? 'present' : 'missing'}`);
+        if (setCookieHeader) {
+          const cookieValue = Array.isArray(setCookieHeader) ? setCookieHeader[0] : setCookieHeader;
+          log(`[Cookie Debug] ${path} - Cookie: ${cookieValue?.substring(0, 100)}...`);
+        }
+        log(`[Cookie Debug] ${path} - Request cookies: ${req.headers.cookie || 'none'}`);
+      }
     }
   });
 
