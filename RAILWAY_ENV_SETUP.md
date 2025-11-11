@@ -240,8 +240,10 @@ ENABLE_REAL_OTP
 ## 🐛 Troubleshooting
 
 ### "MemoryStore warning"
-- **Fix:** Add `USE_DATABASE=true` and Supabase variables
-- This enables database-backed sessions instead of memory
+- **Fix:** Add `DATABASE_URL` (Supabase PostgreSQL connection string) and `USE_DATABASE=true`
+- This enables PostgreSQL session store instead of memory
+- Get `DATABASE_URL` from: Supabase Dashboard → Settings → Database → Connection string (URI)
+- After setup, you should see: `✅ Using PostgreSQL session store (Supabase)`
 
 ### "Supabase Storage will be disabled"
 - **Fix:** Add `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`
