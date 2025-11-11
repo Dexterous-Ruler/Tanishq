@@ -160,6 +160,24 @@ router.post(
       }
       console.log(`[Auth] ✅ Session verified in storage, expires at: ${verifySession.expiresAt}`);
 
+      // Ensure session is saved and cookie is set before sending response
+      console.log(`[Auth] Final session check before response:`, {
+        sessionId: req.sessionID,
+        hasUserId: !!req.session.userId,
+        hasToken: !!req.session.token,
+        cookieName: config.session.cookieName
+      });
+
+      // Log response headers to verify cookie will be set
+      res.on('finish', () => {
+        const setCookieHeader = res.getHeader('Set-Cookie');
+        console.log(`[Auth] Response finished. Set-Cookie header:`, setCookieHeader ? 'present' : 'missing');
+        if (setCookieHeader) {
+          console.log(`[Auth] Cookie value:`, Array.isArray(setCookieHeader) ? setCookieHeader[0] : setCookieHeader);
+        }
+      });
+
+      // Send response - express-session will set the cookie automatically
       res.json({
         success: true,
         message: "OTP verified successfully",
