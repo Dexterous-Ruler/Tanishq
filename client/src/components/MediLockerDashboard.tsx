@@ -214,7 +214,43 @@ export const ArogyaVaultDashboard = (props: ArogyaVaultDashboardProps) => {
     <div className="flex flex-col h-screen w-full max-w-[390px] md:max-w-[448px] lg:max-w-[512px] xl:max-w-[576px] mx-auto bg-white" data-testid="dashboard-container">
       <div className="sticky top-0 z-50 bg-white border-b border-gray-200 px-6 md:px-8 lg:px-10 py-4 md:py-5 lg:py-6 flex items-center justify-between" data-testid="header">
         <div className="flex items-center gap-3 md:gap-4">
-          <Heart className="w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 text-blue-600" data-testid="icon-app-logo" />
+          <motion.div
+            className="relative"
+            animate={{
+              scale: [1, 1.15, 1, 1.08, 1],
+            }}
+            transition={{
+              duration: 1.8,
+              repeat: Infinity,
+              ease: "easeInOut",
+              times: [0, 0.15, 0.3, 0.45, 1],
+            }}
+          >
+            <motion.div
+              className="absolute inset-0 rounded-full"
+              animate={{
+                opacity: [0.4, 0.8, 0.4, 0.6, 0.4],
+                scale: [1, 1.3, 1, 1.2, 1],
+              }}
+              transition={{
+                duration: 1.8,
+                repeat: Infinity,
+                ease: "easeInOut",
+                times: [0, 0.15, 0.3, 0.45, 1],
+              }}
+              style={{
+                background: 'radial-gradient(circle, rgba(239, 68, 68, 0.3) 0%, rgba(239, 68, 68, 0) 70%)',
+                filter: 'blur(8px)',
+              }}
+            />
+            <Heart 
+              className="w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 text-red-400 relative z-10 drop-shadow-sm" 
+              data-testid="icon-app-logo"
+              style={{
+                filter: 'drop-shadow(0 0 6px rgba(239, 68, 68, 0.4))',
+              }}
+            />
+          </motion.div>
           <span className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900" data-testid="text-app-name">{t.common.appName}</span>
         </div>
         <div className="flex items-center gap-2 md:gap-3">
