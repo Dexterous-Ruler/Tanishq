@@ -8,7 +8,7 @@ import { useLocation } from "@/hooks/useLocation";
 export function useNearbyClinics(radius: number = 5000) {
   const { location, loading: locationLoading, error: locationError } = useLocation();
 
-  return useQuery({
+  const query = useQuery({
     queryKey: ["nearby-clinics", location?.latitude, location?.longitude, radius],
     queryFn: () => {
       if (!location) {
@@ -20,5 +20,11 @@ export function useNearbyClinics(radius: number = 5000) {
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: false,
   });
+
+  // Combine location error with query error
+  return {
+    ...query,
+    error: locationError || query.error,
+  };
 }
 

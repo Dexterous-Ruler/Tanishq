@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { MessageCircle, Send, X, Plus, Trash2, Loader2, Bot, Mic, MicOff, Volume2 } from "lucide-react";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
@@ -263,6 +264,26 @@ export function ChatbotWidget({ isOpen: externalIsOpen, onOpenChange: externalOn
 
   return (
     <>
+      {/* Floating Chatbot Button - Always visible when authenticated and chatbot is closed */}
+      {!isOpen && (
+        <motion.button
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={() => setIsOpen(true)}
+          className="fixed bottom-24 right-6 md:right-8 z-50 w-14 h-14 md:w-16 md:h-16 bg-blue-600 rounded-full shadow-lg flex items-center justify-center hover:bg-blue-700 transition-colors"
+          aria-label="Open voice assistant"
+          data-testid="floating-chatbot-button"
+          style={{
+            right: 'calc(50% - min(50vw, 195px) + 24px)',
+            bottom: '100px'
+          }}
+        >
+          <MessageCircle className="w-7 h-7 md:w-8 md:h-8 text-white" />
+        </motion.button>
+      )}
+
       {/* Chat Sheet */}
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetContent side="bottom" className="h-[85vh] md:h-[80vh] flex flex-col p-0 max-h-[85vh] md:max-h-[80vh]">

@@ -21,15 +21,15 @@ export default function HomePage() {
   const isAuthenticated = authStatus?.authenticated === true;
 
   // Request location for clinics when page loads
-  const { requestLocation, location: userLocation } = useGeolocation();
+  const { requestLocation, location: userLocation, loading: locationLoading, error: locationError } = useGeolocation();
   
   useEffect(() => {
     // Request location when authenticated user visits home page
-    if (isAuthenticated && !userLocation) {
+    if (isAuthenticated && !userLocation && !locationLoading && !locationError) {
       console.log('[Home] Requesting user location for nearby clinics');
       requestLocation();
     }
-  }, [isAuthenticated, userLocation, requestLocation]);
+  }, [isAuthenticated, userLocation, locationLoading, locationError, requestLocation]);
 
   // Fetch real documents data (limit to 3 most recent)
   const { data: documentsData, isLoading: documentsLoading } = useDocuments({});
@@ -76,7 +76,7 @@ export default function HomePage() {
       };
 
   // Fetch nearby hospitals (100km radius)
-  const { data: clinicsData, isLoading: clinicsLoading } = useNearbyClinics(100000); // 100km radius
+  const { data: clinicsData, isLoading: clinicsLoading, error: clinicsError } = useNearbyClinics(100000); // 100km radius
   const nearbyClinics = clinicsData?.success ? clinicsData.clinics
     .filter(clinic => clinic.distance <= 100) // Only show hospitals within 100km
     .slice(0, 10) // Show up to 10 hospitals
@@ -229,7 +229,9 @@ export default function HomePage() {
         isLoadingDocuments={documentsLoading}
         healthInsight={healthInsight}
         nearbyClinics={nearbyClinics}
-        isLoadingClinics={clinicsLoading}
+        isLoadingClinics={clinicsLoading || locationLoading}
+        clinicsError={locationError || (clinicsError instanceof Error ? clinicsError.message : clinicsError)}
+        onRequestLocation={requestLocation}
         onMicClick={handleMicClick}
         onNotificationsClick={handleNotificationsClick}
         onSearchClick={handleSearchClick}

@@ -26,6 +26,8 @@ type ArogyaVaultDashboardProps = {
     longitude?: number;
   }>;
   isLoadingClinics?: boolean;
+  clinicsError?: string | null;
+  onRequestLocation?: () => void;
   onLanguageToggle?: () => void;
   onMicClick?: () => void;
   onNotificationsClick?: () => void;
@@ -159,6 +161,8 @@ export const ArogyaVaultDashboard = (props: ArogyaVaultDashboardProps) => {
     healthInsight: propHealthInsight, // Use prop instead of hardcoded
     nearbyClinics = [],
     isLoadingClinics = false,
+    clinicsError = null,
+    onRequestLocation,
     onLanguageToggle,
     onMicClick,
     onNotificationsClick,
@@ -212,16 +216,22 @@ export const ArogyaVaultDashboard = (props: ArogyaVaultDashboardProps) => {
           <span className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900" data-testid="text-app-name">{t.common.appName}</span>
         </div>
         <div className="flex items-center gap-2 md:gap-3">
-          {guidedMode && (
-            <motion.button 
-              whileTap={{ scale: 0.95 }} 
-              className="p-2 md:p-2.5 lg:p-3 hover:bg-gray-100 rounded-lg"
-              onClick={onMicClick}
-              data-testid="button-mic"
-            >
-              <Mic className="w-5 h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 text-gray-700" />
-            </motion.button>
-          )}
+          {/* Voice/Chatbot button - always visible */}
+          <motion.button 
+            whileTap={{ scale: 0.95 }} 
+            className="p-2 md:p-2.5 lg:p-3 hover:bg-gray-100 rounded-lg"
+            onClick={() => {
+              if (onMicClick) {
+                onMicClick();
+              } else if (onChatbotClick) {
+                onChatbotClick();
+              }
+            }}
+            data-testid="button-voice-chatbot"
+            title="Voice Assistant & Chatbot"
+          >
+            <Mic className="w-5 h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 text-blue-600" />
+          </motion.button>
           <LanguageSelector variant="compact" className="w-auto" />
           <motion.button 
             whileTap={{ scale: 0.95 }} 
@@ -478,6 +488,20 @@ export const ArogyaVaultDashboard = (props: ArogyaVaultDashboardProps) => {
                   </div>
                 ))}
               </div>
+            ) : clinicsError ? (
+              <div className="bg-white rounded-xl border border-amber-200 p-4 text-center bg-amber-50">
+                <MapPin className="w-8 h-8 text-amber-600 mx-auto mb-2" />
+                <p className="text-sm font-medium text-amber-900 mb-1">Location access required</p>
+                <p className="text-xs text-amber-700 mb-3">{clinicsError}</p>
+                {onRequestLocation && (
+                  <button
+                    onClick={onRequestLocation}
+                    className="text-sm px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
+                  >
+                    Enable Location
+                  </button>
+                )}
+              </div>
             ) : nearbyClinics.length > 0 ? (
               <div className="space-y-3" data-testid="nearby-clinics-list">
                 {nearbyClinics.map((clinic, index) => (
@@ -520,7 +544,16 @@ export const ArogyaVaultDashboard = (props: ArogyaVaultDashboardProps) => {
               </div>
             ) : (
               <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
-                <p className="text-sm text-gray-500">No clinics found nearby</p>
+                <MapPin className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                <p className="text-sm text-gray-500 mb-2">No clinics found nearby</p>
+                {onRequestLocation && (
+                  <button
+                    onClick={onRequestLocation}
+                    className="text-xs px-3 py-1.5 text-blue-600 hover:text-blue-700 underline"
+                  >
+                    Try refreshing location
+                  </button>
+                )}
               </div>
             )}
           </motion.div>
