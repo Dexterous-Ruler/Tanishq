@@ -22,7 +22,12 @@ export async function createUserSession(
   console.log(`[SessionService] UserId: ${userId}`);
   console.log(`[SessionService] Request session ID: ${req.sessionID}`);
   console.log(`[SessionService] Request has session: ${!!req.session}`);
+  console.log(`[SessionService] Existing session data:`, {
+    hasUserId: !!req.session.userId,
+    hasToken: !!req.session.token,
+  });
   
+  // Generate a new session token for our custom storage
   const token = randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + config.session.maxAge);
 
@@ -30,46 +35,73 @@ export async function createUserSession(
   console.log(`[SessionService] Token: ${token.substring(0, 8)}...`);
   console.log(`[SessionService] Expires at: ${expiresAt.toISOString()}`);
 
-  // Create session in storage first
+  // Create session in our custom storage (Supabase) first
   try {
-    console.log(`[SessionService] Saving session to storage...`);
+    console.log(`[SessionService] Saving session to Supabase storage...`);
     await storage.createSession(userId, token, config.session.maxAge);
-    console.log(`[SessionService] ✅ Session saved to storage`);
+    console.log(`[SessionService] ✅ Session saved to Supabase storage`);
   } catch (storageError: any) {
-    console.error(`[SessionService] ❌ Failed to save session to storage:`, storageError);
+    console.error(`[SessionService] ❌ Failed to save session to Supabase storage:`, storageError);
     throw new Error(`Failed to save session to storage: ${storageError.message}`);
   }
 
-  // Set session in express-session
+  // Set session data in express-session
+  // IMPORTANT: These values will be serialized as JSON and stored in PostgreSQL session table
+  // The session store (connect-pg-simple) handles serialization/deserialization automatically
   req.session.userId = userId;
   req.session.token = token;
-  // Mark session as modified so it gets saved
+  
+  // Mark session as modified so express-session knows to save it
   req.session.touch();
+  
   console.log(`[SessionService] Session data set in req.session:`, {
     userId: req.session.userId,
     token: req.session.token ? `${req.session.token.substring(0, 8)}...` : 'missing',
     sessionId: req.sessionID,
+    cookieName: config.session.cookieName,
   });
 
-  // Explicitly save the session to ensure it's persisted
-  return new Promise((resolve, reject) => {
-    console.log(`[SessionService] Saving express-session (async)...`);
+  // CRITICAL: Save the session to PostgreSQL store
+  // This will:
+  // 1. Serialize session data (userId, token) to JSON
+  // 2. Store it in PostgreSQL session table with the session ID
+  // 3. Set the session ID cookie in the response (when response is sent)
+  return new Promise<string>((resolve, reject) => {
+    console.log(`[SessionService] Saving express-session to PostgreSQL store...`);
     req.session.save((err) => {
       if (err) {
         console.error(`[SessionService] ❌ Express session save error:`, err);
         console.error(`[SessionService] Error details:`, err.message, err.stack);
         reject(err);
-      } else {
-        console.log(`[SessionService] ✅ Express session saved successfully`);
-        console.log(`[SessionService] Session ID: ${req.sessionID}`);
-        console.log(`[SessionService] Session cookie name: ${config.session.cookieName}`);
-        // Verify session data is still there
-        console.log(`[SessionService] Verified session data after save:`, {
-          hasUserId: !!req.session.userId,
-          hasToken: !!req.session.token,
-        });
-        resolve(token);
+        return;
       }
+      
+      // Session saved successfully to PostgreSQL
+      console.log(`[SessionService] ✅ Express session saved to PostgreSQL store`);
+      console.log(`[SessionService] Session ID: ${req.sessionID}`);
+      console.log(`[SessionService] Session cookie name: ${config.session.cookieName}`);
+      console.log(`[SessionService] Cookie will be set when response is sent`);
+      
+      // Verify session data is still in req.session after save
+      // This confirms the data is ready to be serialized
+      const sessionData = {
+        hasUserId: !!req.session.userId,
+        hasToken: !!req.session.token,
+        userId: req.session.userId,
+        token: req.session.token ? `${req.session.token.substring(0, 8)}...` : 'missing',
+      };
+      console.log(`[SessionService] Verified session data after save:`, sessionData);
+      
+      // Double-check: If session data is missing, something went wrong
+      if (!req.session.userId || !req.session.token) {
+        console.error(`[SessionService] ⚠️  WARNING: Session data missing after save!`);
+        console.error(`[SessionService] This indicates a serialization issue`);
+        reject(new Error("Session data lost during save"));
+        return;
+      }
+      
+      console.log(`[SessionService] ✅ Session creation complete - ready to set cookie`);
+      resolve(token);
     });
   });
 }

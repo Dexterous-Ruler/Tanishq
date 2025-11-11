@@ -102,6 +102,9 @@ if (databaseUrl && useDatabase) {
   sessionStore = new session.MemoryStore();
 }
 
+// Configure session with proper cookie settings for Railway
+// Critical: Railway uses HTTPS, so we must set secure: true in production
+// With trust proxy set, Express detects HTTPS from X-Forwarded-Proto header
 app.use(
   session({
     store: sessionStore,
@@ -110,18 +113,19 @@ app.use(
     saveUninitialized: false,
     name: config.session.cookieName,
     cookie: {
-      // Railway always uses HTTPS, so secure should be true in production
-      // With trust proxy set, Express will correctly detect HTTPS from X-Forwarded-Proto
+      // CRITICAL: Railway always uses HTTPS, so secure MUST be true in production
+      // Even if Express doesn't detect HTTPS correctly, we know Railway uses HTTPS
+      // Setting secure: true ensures cookie is only sent over HTTPS
       secure: isProduction, // true in production (HTTPS), false in development (HTTP)
-      httpOnly: true,
-      maxAge: config.session.maxAge,
+      httpOnly: true, // Prevent XSS attacks - cookie not accessible via JavaScript
+      maxAge: config.session.maxAge, // 30 days
       // Use "lax" for same-site requests (frontend and backend on same domain)
-      // Railway serves everything from the same domain, so "lax" works
-      sameSite: "lax",
+      // Railway serves everything from the same domain, so "lax" works perfectly
+      sameSite: "lax", // Allows cookies on same-site requests
       // Don't set domain - let browser use current domain (works for Railway)
-      // Don't set path - use default "/"
+      // Don't set path - use default "/" (cookie available for all paths)
     },
-    // Force save even if session wasn't modified
+    // Force save even if session wasn't modified (extends session expiry)
     rolling: true,
   })
 );

@@ -163,36 +163,59 @@ router.post(
       }
       console.log(`[Auth] ✅ Session verified in storage, expires at: ${verifySession.expiresAt}`);
 
-      // Ensure session is saved and cookie is set before sending response
+      // Final verification before sending response
       console.log(`[Auth] Final session check before response:`, {
         sessionId: req.sessionID,
         hasUserId: !!req.session.userId,
         hasToken: !!req.session.token,
-        cookieName: config.session.cookieName
+        cookieName: config.session.cookieName,
       });
 
-      // Note: Session is already saved in createUserSession, no need to save again
-      // Express-session will automatically set the cookie when response is sent
+      // CRITICAL: Verify session data is still in req.session
+      // This ensures it will be serialized and stored in PostgreSQL
+      if (!req.session.userId || !req.session.token) {
+        console.error(`[Auth] ❌ CRITICAL: Session data lost before response!`);
+        console.error(`[Auth] Session state:`, {
+          userId: req.session.userId || 'MISSING',
+          token: req.session.token || 'MISSING',
+          sessionId: req.sessionID,
+        });
+        throw new Error("Session data lost - cannot proceed");
+      }
 
-      // Log response headers to verify cookie will be set
+      // Express-session will automatically set the cookie when response is sent
+      // The cookie will contain the session ID, which is used to load the session
+      // from PostgreSQL store on subsequent requests
+
+      // Log response headers AFTER response is sent (in finish event)
       res.on('finish', () => {
         const setCookieHeader = res.getHeader('Set-Cookie');
-        console.log(`[Auth] Response finished. Set-Cookie header:`, setCookieHeader ? 'present' : 'missing');
+        console.log(`[Auth] ========== RESPONSE SENT ==========`);
+        console.log(`[Auth] Set-Cookie header:`, setCookieHeader ? '✅ present' : '❌ missing');
         if (setCookieHeader) {
           const cookieStr = Array.isArray(setCookieHeader) ? setCookieHeader[0] : String(setCookieHeader);
-          console.log(`[Auth] Cookie value (first 100 chars):`, cookieStr.substring(0, 100));
+          console.log(`[Auth] Cookie preview:`, cookieStr.substring(0, 150));
+          // Verify cookie has all required flags
+          const hasSecure = cookieStr.includes('Secure');
+          const hasHttpOnly = cookieStr.includes('HttpOnly');
+          const hasSameSite = cookieStr.includes('SameSite');
+          console.log(`[Auth] Cookie flags - Secure: ${hasSecure}, HttpOnly: ${hasHttpOnly}, SameSite: ${hasSameSite}`);
+          if (!hasSecure && process.env.NODE_ENV === "production") {
+            console.error(`[Auth] ⚠️  WARNING: Cookie missing Secure flag in production!`);
+          }
+        } else {
+          console.error(`[Auth] ❌ CRITICAL: Cookie not set in response!`);
+          console.error(`[Auth] This means the session cookie won't be sent to the browser`);
+          console.error(`[Auth] Check: 1) Session was saved, 2) Cookie config is correct, 3) Protocol detection`);
         }
-        console.log(`[Auth] Response headers:`, {
-          'set-cookie': setCookieHeader ? 'present' : 'missing',
-          'content-type': res.getHeader('content-type'),
-        });
       });
 
-      // Send response - express-session will set the cookie automatically
+      // Send response with success
+      // Express-session middleware will automatically add Set-Cookie header
       res.json({
         success: true,
         message: "OTP verified successfully",
-        token: sessionToken,
+        token: sessionToken, // Include token in response for reference (session is in cookie)
         user: {
           id: user.id,
           phoneNumber: user.phoneNumber,
