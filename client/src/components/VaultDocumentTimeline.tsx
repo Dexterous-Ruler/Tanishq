@@ -12,6 +12,7 @@ type Document = {
   provider?: string;
   date?: string; // Report date (optional)
   uploadDate?: string; // Upload/created date (optional)
+  uploadTime?: string; // Upload time (optional)
   type: DocumentType;
   tags: string[];
   thumbnail?: string;
@@ -372,13 +373,16 @@ export const VaultDocumentTimeline = ({
                             </p>
                           </div>
                         ) : null}
-                        {/* Show upload date (always show if available, as secondary info) */}
+                        {/* Show upload date with time (always show if available, as secondary info) */}
                         {doc.uploadDate && (
                           <div className="flex items-center gap-2">
                             <Calendar className="w-3 h-3 md:w-4 md:h-4 text-gray-400 flex-shrink-0" />
                             <p className={`${doc.date ? 'text-xs md:text-sm text-gray-500' : 'text-sm md:text-base lg:text-lg text-gray-600'}`} data-testid={`text-document-upload-date-${doc.id}`}>
                               <span className={`${doc.date ? 'text-gray-400' : 'text-gray-500'} text-xs font-medium`}>{t.vault.uploadedOn}: </span>
                               {doc.uploadDate}
+                              {doc.uploadTime && (
+                                <span className="ml-1.5">• {doc.uploadTime}</span>
+                              )}
                             </p>
                           </div>
                         )}

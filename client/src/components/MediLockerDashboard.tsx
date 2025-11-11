@@ -14,6 +14,7 @@ type ArogyaVaultDashboardProps = {
     type: string;
     date?: string; // Report date
     uploadDate?: string; // Upload date
+    uploadTime?: string; // Upload time
     thumbnail?: string;
   }>;
   isLoadingDocuments?: boolean;
@@ -416,7 +417,10 @@ export const ArogyaVaultDashboard = (props: ArogyaVaultDashboardProps) => {
                       {doc.uploadDate && (
                         <p className={`flex items-center gap-1 ${doc.date ? 'text-gray-400 text-[10px]' : ''}`} data-testid={`text-document-upload-date-${doc.id}`}>
                           {!doc.date && <Calendar className="w-3 h-3" />}
-                          <span className="truncate">{doc.uploadDate}</span>
+                          <span className="truncate">
+                            {doc.uploadDate}
+                            {doc.uploadTime && <span className="ml-1">• {doc.uploadTime}</span>}
+                          </span>
                         </p>
                       )}
                     </div>

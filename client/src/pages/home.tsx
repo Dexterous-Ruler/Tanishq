@@ -106,6 +106,7 @@ export default function HomePage() {
   const recentDocuments = documentsData?.documents?.slice(0, 3).map((doc, index) => {
     const previewQuery = previewQueries[index];
     const previewUrl = previewQuery?.data?.success ? previewQuery.data.previewUrl : null;
+    const createdAt = new Date(doc.createdAt);
     
     return {
       id: doc.id,
@@ -117,11 +118,16 @@ export default function HomePage() {
         month: 'short',
         year: 'numeric'
       }) : undefined, // Report date
-      uploadDate: new Date(doc.createdAt).toLocaleDateString('en-GB', {
+      uploadDate: createdAt.toLocaleDateString('en-GB', {
         day: 'numeric',
         month: 'short',
         year: 'numeric'
       }), // Upload date
+      uploadTime: createdAt.toLocaleTimeString('en-GB', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      }), // Upload time
       thumbnail: previewUrl || '/api/placeholder/80/100' // Use preview URL or placeholder
     };
   }) || [];

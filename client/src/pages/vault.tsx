@@ -123,25 +123,33 @@ export default function VaultPage() {
   };
 
   // Convert API documents to component format
-  const documents = documentsData?.documents?.map((doc) => ({
-    id: doc.id,
-    title: doc.title,
-    provider: doc.provider || undefined,
-    date: doc.date ? new Date(doc.date).toLocaleDateString('en-GB', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric'
-    }) : undefined, // Report date - only if available
-    uploadDate: new Date(doc.createdAt).toLocaleDateString('en-GB', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric'
-    }), // Upload date - always available
-    type: doc.type,
-    tags: doc.tags || [],
-    fileType: doc.fileType || undefined,
-    isOffline: doc.syncStatus === 'pending',
-  })) || [];
+  const documents = documentsData?.documents?.map((doc) => {
+    const createdAt = new Date(doc.createdAt);
+    return {
+      id: doc.id,
+      title: doc.title,
+      provider: doc.provider || undefined,
+      date: doc.date ? new Date(doc.date).toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric'
+      }) : undefined, // Report date - only if available
+      uploadDate: createdAt.toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric'
+      }), // Upload date - always available
+      uploadTime: createdAt.toLocaleTimeString('en-GB', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      }), // Upload time - always available
+      type: doc.type,
+      tags: doc.tags || [],
+      fileType: doc.fileType || undefined,
+      isOffline: doc.syncStatus === 'pending',
+    };
+  }) || [];
 
   // Calculate actual pending count
   const pendingCount = documentsData?.documents?.filter(doc => doc.syncStatus === 'pending').length || 0;
