@@ -165,6 +165,18 @@ OPENAI_API_KEY
 - Get from: https://platform.openai.com/api-keys
 - ⚠️ Keep it secret!
 
+### 8. Google Places API (Optional - for better clinic search results)
+
+```
+GOOGLE_PLACES_API_KEY
+```
+**Value**: Your Google Places API key (optional)
+- **NOT REQUIRED**: Clinics feature works without this using OpenStreetMap (free)
+- Get from: https://console.cloud.google.com/apis/credentials
+- Requires billing enabled on Google Cloud
+- If not set, app automatically uses OpenStreetMap (free, no API key needed)
+- ⚠️ Keep it secret if you use it!
+
 ## Quick Setup Checklist
 
 ### Step 1: Set Database Variables (CRITICAL)
@@ -198,6 +210,9 @@ OPENAI_API_KEY
 
 ### Step 7: Set OpenAI Variables (If using AI)
 - [ ] `OPENAI_API_KEY` - OpenAI API key
+
+### Step 8: Set Google Places API (Optional - Clinics work without this)
+- [ ] `GOOGLE_PLACES_API_KEY` - Google Places API key (optional, not required)
 
 ## How to Set Variables in Railway
 

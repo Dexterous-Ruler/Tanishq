@@ -22,28 +22,44 @@ export function useLocation(): UseLocationResult {
 
   const requestLocation = () => {
     if (!navigator.geolocation) {
-      setError('Geolocation is not supported by your browser');
+      const errorMsg = 'Geolocation is not supported by your browser';
+      console.error('[useLocation]', errorMsg);
+      setError(errorMsg);
       return;
     }
 
+    console.log('[useLocation] Requesting location permission...');
     setLoading(true);
     setError(null);
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        setLocation({
+        const loc = {
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
-        });
+        };
+        console.log('[useLocation] Location obtained:', loc);
+        setLocation(loc);
         setLoading(false);
       },
       (err) => {
-        setError(err.message || 'Failed to get location');
+        let errorMsg = 'Failed to get location';
+        if (err.code === 1) {
+          errorMsg = 'Location permission denied. Please enable location access in your browser settings.';
+        } else if (err.code === 2) {
+          errorMsg = 'Location unavailable. Please check your device location settings.';
+        } else if (err.code === 3) {
+          errorMsg = 'Location request timed out. Please try again.';
+        } else {
+          errorMsg = err.message || 'Failed to get location';
+        }
+        console.error('[useLocation] Location error:', err.code, errorMsg);
+        setError(errorMsg);
         setLoading(false);
       },
       {
         enableHighAccuracy: true,
-        timeout: 10000,
+        timeout: 15000, // Increased timeout to 15 seconds
         maximumAge: 0,
       }
     );

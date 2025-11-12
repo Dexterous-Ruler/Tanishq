@@ -27,9 +27,24 @@ export default function HomePage() {
     // Request location when authenticated user visits home page
     if (isAuthenticated && !userLocation && !locationLoading && !locationError) {
       console.log('[Home] Requesting user location for nearby clinics');
-      requestLocation();
+      // Small delay to ensure page is fully loaded
+      const timer = setTimeout(() => {
+        requestLocation();
+      }, 500);
+      return () => clearTimeout(timer);
     }
   }, [isAuthenticated, userLocation, locationLoading, locationError, requestLocation]);
+
+  // Debug logging for clinics
+  useEffect(() => {
+    if (clinicsData) {
+      console.log('[Home] Clinics data:', clinicsData);
+      console.log('[Home] Nearby clinics count:', nearbyClinics.length);
+    }
+    if (clinicsError) {
+      console.error('[Home] Clinics error:', clinicsError);
+    }
+  }, [clinicsData, clinicsError, nearbyClinics.length]);
 
   // Fetch real documents data (limit to 3 most recent)
   const { data: documentsData, isLoading: documentsLoading } = useDocuments({});
