@@ -1,0 +1,48 @@
+version: 2
+
+services:
+  - type: web
+    name: arogya-vault
+    runtime: node
+    region: singapore
+    plan: free
+    branch: main
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: USE_DATABASE
+        value: true
+      - key: SUPABASE_URL
+        value: https://aftpyopmrdoojqejpkfv.supabase.co
+      - key: SUPABASE_ANON_KEY
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFmdHB5b3BtcmRvb2pxZWpwa2Z2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc2Mjc2NzQsImV4cCI6MjA4MzIwMzY3NH0.lPUgHqbcM74icbCQPwllZD5Kk749GW6z6DINsOwiZq8
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: EMAIL_PROVIDER
+        value: smtp
+      - key: SMTP_HOST
+        value: smtp.resend.com
+      - key: SMTP_PORT
+        value: 465
+      - key: SMTP_SECURE
+        value: true
+      - key: SMTP_USERNAME
+        value: resend
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: EMAIL_FROM
+        value: team@arogyavault.me
+      - key: EMAIL_FROM_NAME
+        value: Arogya Vault
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: VAPID_SUBJECT
+        value: mailto:team@arogyavault.me
