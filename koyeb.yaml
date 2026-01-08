@@ -1,0 +1,19 @@
+# Koyeb Deployment Configuration
+# This file configures how Koyeb builds and runs your application
+
+name: arogya-vault
+
+build:
+  # Build command - installs dependencies and builds the app
+  command: npm install && npm run build
+  
+  # Build directory (where build artifacts are created)
+  build_dir: .
+
+run:
+  # Command to start the application
+  command: npm start
+  
+  # Port the application listens on (Koyeb will set PORT env var)
+  port: 3000
+

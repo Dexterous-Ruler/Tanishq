@@ -220,6 +220,7 @@ router.post(
           id: user.id,
           phoneNumber: user.phoneNumber,
           isGuest: user.isGuest,
+          onboardingCompleted: user.onboardingCompleted || false, // Include onboarding status
         },
       });
     } catch (error: any) {

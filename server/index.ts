@@ -102,9 +102,14 @@ if (databaseUrl && useDatabase) {
   sessionStore = new session.MemoryStore();
 }
 
-// Configure session with proper cookie settings for Railway
-// Critical: Railway uses HTTPS, so we must set secure: true in production
-// With trust proxy set, Express detects HTTPS from X-Forwarded-Proto header
+// Determine if we should use secure cookies
+// Check if we're actually on HTTPS or behind a proxy that provides X-Forwarded-Proto
+// For local development, even with NODE_ENV=production, use secure: false if on HTTP
+const useSecureCookies = process.env.FORCE_SECURE_COOKIES === "true" || 
+  (isProduction && process.env.ALLOW_HTTP_COOKIES !== "true");
+
+// Configure session with proper cookie settings
+// Secure flag is set based on environment, but can be overridden
 app.use(
   session({
     store: sessionStore,
@@ -113,16 +118,14 @@ app.use(
     saveUninitialized: false,
     name: config.session.cookieName,
     cookie: {
-      // CRITICAL: Railway always uses HTTPS, so secure MUST be true in production
-      // Even if Express doesn't detect HTTPS correctly, we know Railway uses HTTPS
-      // Setting secure: true ensures cookie is only sent over HTTPS
-      secure: isProduction, // true in production (HTTPS), false in development (HTTP)
+      // Use secure cookies only if explicitly forced or in production (unless HTTP allowed)
+      // For local development with NODE_ENV=production, set ALLOW_HTTP_COOKIES=true
+      secure: useSecureCookies,
       httpOnly: true, // Prevent XSS attacks - cookie not accessible via JavaScript
       maxAge: config.session.maxAge, // 30 days
       // Use "lax" for same-site requests (frontend and backend on same domain)
-      // Railway serves everything from the same domain, so "lax" works perfectly
       sameSite: "lax", // Allows cookies on same-site requests
-      // Don't set domain - let browser use current domain (works for Railway)
+      // Don't set domain - let browser use current domain
       // Don't set path - use default "/" (cookie available for all paths)
     },
     // Force save even if session wasn't modified (extends session expiry)

@@ -5,6 +5,71 @@
 
 import { config } from "../config";
 
+// Import Twilio - use a more reliable method for production builds
+let twilioModule: any = null;
+let twilioLoadError: Error | null = null;
+
+async function loadTwilio() {
+  if (twilioLoadError) {
+    throw twilioLoadError;
+  }
+  
+  if (!twilioModule) {
+    try {
+      // Use dynamic import with explicit path resolution
+      // This works better with bundled code
+      const twilioPath = "twilio";
+      
+      // Try importing with different methods
+      let imported: any;
+      try {
+        // Method 1: Standard dynamic import
+        imported = await import(twilioPath);
+        twilioModule = imported.default || imported;
+      } catch (importError: any) {
+        // Method 2: Try with node: protocol
+        try {
+          imported = await import(`node:${twilioPath}`);
+          twilioModule = imported.default || imported;
+        } catch (nodeError: any) {
+          // Method 3: Use createRequire as fallback
+          try {
+            const { createRequire } = await import("module");
+            // Try to get a valid URL for createRequire
+            let requireUrl: string | URL;
+            try {
+              requireUrl = import.meta.url;
+            } catch {
+              // Fallback if import.meta.url is not available
+              requireUrl = new URL('.', 'file://' + process.cwd() + '/');
+            }
+            const require = createRequire(requireUrl);
+            twilioModule = require(twilioPath);
+          } catch (requireError: any) {
+            throw new Error(`All import methods failed. Last error: ${requireError.message}`);
+          }
+        }
+      }
+      
+      if (!twilioModule || typeof twilioModule !== 'function') {
+        throw new Error("Twilio module loaded but is not a function");
+      }
+      
+      console.log("✅ Twilio module loaded successfully");
+    } catch (error: any) {
+      twilioLoadError = error;
+      console.error("❌ Failed to load Twilio package:", error.message);
+      console.error("   Error details:", {
+        message: error.message,
+        code: error.code,
+        stack: error.stack?.split('\n').slice(0, 5).join('\n')
+      });
+      throw new Error(`Twilio package not available: ${error.message}. Please ensure twilio is installed: npm install twilio`);
+    }
+  }
+  return twilioModule;
+}
+
 export interface ISMSService {
   sendOTP(phoneNumber: string, otp: string): Promise<void>;
 }
@@ -54,8 +119,8 @@ export class TwilioSMSService implements ISMSService {
     // Initialize Twilio client lazily (on first use)
     if (!this.client) {
       try {
-        const twilio = await import("twilio");
-        this.client = twilio.default(this.accountSid, this.authToken);
+        const twilio = await loadTwilio();
+        this.client = twilio(this.accountSid, this.authToken);
       } catch (error: any) {
         console.error("❌ Failed to load Twilio package:", error.message);
         throw new Error("Twilio package not available. Please install it: npm install twilio");

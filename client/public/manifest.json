@@ -1,0 +1,67 @@
+{
+  "name": "Arogya Vault",
+  "short_name": "Arogya Vault",
+  "description": "Your Health. Your Control. Secure health data management with encrypted storage and easy access to your medical records.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563EB",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["health", "medical", "productivity"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Vault",
+      "short_name": "Vault",
+      "description": "View your medical documents",
+      "url": "/vault",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Emergency Card",
+      "short_name": "Emergency",
+      "description": "View emergency medical card",
+      "url": "/emergency",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Medications",
+      "short_name": "Medications",
+      "description": "Manage your medications",
+      "url": "/medications",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "share_target": {
+    "action": "/vault",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "file",
+          "accept": ["image/*", "application/pdf"]
+        }
+      ]
+    }
+  }
+}
+

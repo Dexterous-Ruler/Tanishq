@@ -223,7 +223,7 @@ router.get("/", async (req: Request, res: Response, next: NextFunction) => {
 
     const documents = await storage.getDocumentsByUserId(req.userId!, filters);
 
-    // Format response
+    // Format response - include AI analysis fields
     const formatted = documents.map((doc) => ({
       id: doc.id,
       title: doc.title,
@@ -234,6 +234,12 @@ router.get("/", async (req: Request, res: Response, next: NextFunction) => {
       fileSize: doc.fileSize,
       tags: doc.tags ? JSON.parse(doc.tags) : [],
       syncStatus: doc.syncStatus,
+      // Include AI analysis fields
+      extractedText: doc.extractedText || null,
+      ocrProcessed: doc.ocrProcessed || false,
+      ocrProcessedAt: doc.ocrProcessedAt || null,
+      aiInsight: doc.aiInsight ? JSON.parse(doc.aiInsight) : null,
+      aiInsightGeneratedAt: doc.aiInsightGeneratedAt || null,
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
     }));

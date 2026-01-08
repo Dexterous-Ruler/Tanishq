@@ -40,16 +40,23 @@ export function getBaseURL(req?: Request): string {
     return url.replace(/\/$/, '');
   }
   
-  // Priority 3: Runtime detection from request (for production)
+  // Priority 3: Runtime detection from request (works in both dev and production)
   // This allows dynamic URL detection based on the actual request
-  if (req && isProduction) {
+  // This is especially useful when deploying to different platforms
+  if (req) {
     const host = req.get('host');
     if (host) {
-      // In production behind proxy, ensure HTTPS
+      // Detect protocol from request (works with proxies)
       const forwardedProto = req.get('X-Forwarded-Proto');
       const isSecure = req.secure || forwardedProto === 'https';
       const protocol = isSecure ? 'https' : 'http';
-      return `${protocol}://${host}`.replace(/\/$/, '');
+      const detectedUrl = `${protocol}://${host}`.replace(/\/$/, '');
+      
+      // In production, prefer detected URL over localhost
+      // In development, only use detected URL if it's not localhost (for deployment testing)
+      if (isProduction || !host.includes('localhost')) {
+        return detectedUrl;
+      }
     }
   }
   

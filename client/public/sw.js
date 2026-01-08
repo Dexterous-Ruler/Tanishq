@@ -9,6 +9,22 @@ const APP_URL = "/";
 // Install event - cache static assets
 self.addEventListener("install", (event) => {
   console.log("[Service Worker] Installing...");
+  
+  // Cache essential assets for offline support
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      console.log("[Service Worker] Caching essential assets");
+      return cache.addAll([
+        "/",
+        "/icon-192.png",
+        "/icon-512.png",
+        "/manifest.json",
+      ]).catch((err) => {
+        console.warn("[Service Worker] Some assets failed to cache:", err);
+      });
+    })
+  );
+  
   self.skipWaiting(); // Activate immediately
 });
 
@@ -22,9 +38,62 @@ self.addEventListener("activate", (event) => {
           .filter((cacheName) => cacheName !== CACHE_NAME)
           .map((cacheName) => caches.delete(cacheName))
       );
+    }).then(() => {
+      return self.clients.claim(); // Take control of all pages
     })
   );
-  return self.clients.claim(); // Take control of all pages
+});
+
+// Fetch event - serve cached content when offline
+self.addEventListener("fetch", (event) => {
+  // Only handle GET requests
+  if (event.request.method !== "GET") {
+    return;
+  }
+
+  // Skip API requests and external resources
+  if (
+    event.request.url.includes("/api/") ||
+    event.request.url.startsWith("http") && !event.request.url.startsWith(self.location.origin)
+  ) {
+    return;
+  }
+
+  event.respondWith(
+    caches.match(event.request).then((cachedResponse) => {
+      // Return cached version if available
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+
+      // Otherwise fetch from network
+      return fetch(event.request).then((response) => {
+        // Don't cache non-successful responses
+        if (!response || response.status !== 200 || response.type !== "basic") {
+          return response;
+        }
+
+        // Clone the response for caching
+        const responseToCache = response.clone();
+
+        // Cache the response
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(event.request, responseToCache);
+        });
+
+        return response;
+      }).catch(() => {
+        // If fetch fails and it's a navigation request, return a fallback
+        if (event.request.mode === "navigate") {
+          return caches.match("/") || new Response("Offline", {
+            status: 503,
+            statusText: "Service Unavailable",
+            headers: new Headers({ "Content-Type": "text/html" }),
+          });
+        }
+      });
+    })
+  );
 });
 
 // Push event - handle incoming push notifications

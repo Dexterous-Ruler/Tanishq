@@ -20,6 +20,7 @@ export interface VerifyOTPResponse {
     id: string;
     phoneNumber: string;
     isGuest: boolean;
+    onboardingCompleted?: boolean;
   };
 }
 
